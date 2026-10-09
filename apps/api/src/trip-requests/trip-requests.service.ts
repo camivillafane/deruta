@@ -22,7 +22,6 @@ export class TripRequestsService {
     return this.dataSource.transaction(async (manager) => {
       const trip = await manager.findOne(Trip, {
         where: { id: dto.tripId },
-        lock: { mode: 'pessimistic_write' },
       });
       if (!trip) {
         throw new NotFoundException('Viaje no encontrado');
@@ -88,7 +87,6 @@ export class TripRequestsService {
       const request = await manager.findOne(TripRequest, {
         where: { id: requestId },
         relations: { trip: true },
-        lock: { mode: 'pessimistic_write' },
       });
       if (!request) {
         throw new NotFoundException('Solicitud no encontrada');
@@ -134,7 +132,6 @@ export class TripRequestsService {
       const request = await manager.findOne(TripRequest, {
         where: { id: requestId, passengerId },
         relations: { trip: true },
-        lock: { mode: 'pessimistic_write' },
       });
       if (!request) {
         throw new NotFoundException('Solicitud no encontrada');

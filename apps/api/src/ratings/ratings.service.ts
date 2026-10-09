@@ -34,10 +34,13 @@ export class RatingsService {
     }
 
     const isDriver = trip.driverId === reviewerId;
-    const acceptedRequest = trip.requests?.find(
-      (request) => request.passengerId === reviewerId && request.status === TripRequestStatus.ACCEPTED,
+    const acceptedRequests = trip.requests?.filter(
+      (request) => request.status === TripRequestStatus.ACCEPTED,
+    ) ?? [];
+    const passengerRequest = acceptedRequests.find(
+      (request) => request.passengerId === reviewerId,
     );
-    const isPassenger = !!acceptedRequest;
+    const isPassenger = !!passengerRequest;
 
     if (!isDriver && !isPassenger) {
       throw new BadRequestException('No podés calificar este viaje');
@@ -48,10 +51,13 @@ export class RatingsService {
       throw new BadRequestException('No podés calificarte a vos mismo');
     }
 
+    const acceptedPassengerIds = acceptedRequests.map((request) => request.passengerId);
     const validReviewedUserId = isDriver
-      ? acceptedRequest?.passengerId
+      ? acceptedPassengerIds.includes(reviewedUserId)
+        ? reviewedUserId
+        : undefined
       : trip.driverId;
-    if (reviewedUserId !== validReviewedUserId) {
+    if (!validReviewedUserId || reviewedUserId !== validReviewedUserId) {
       throw new BadRequestException('Solo podés calificar a la contraparte de este viaje');
     }
 

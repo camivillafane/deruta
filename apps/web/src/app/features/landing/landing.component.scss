@@ -109,10 +109,10 @@
 
 .landing-description {
   background-color: var(--color-gray-light);
-  padding: 64px 0;
+  padding: 24px 0;
 
   @media (min-width: 768px) {
-    padding: 80px 0;
+    padding: 32px 0;
   }
 
   &__text {

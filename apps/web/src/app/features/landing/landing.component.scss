@@ -12,7 +12,12 @@
     align-items: center;
 
     @media (min-width: 768px) {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 48px;
+    }
+
+    @media (min-width: 1024px) {
+      grid-template-columns: 1fr 1.4fr;
       gap: 64px;
     }
   }
@@ -58,23 +63,37 @@
   &__visual {
     display: flex;
     justify-content: center;
+    width: 100%;
+
+    @media (min-width: 768px) {
+      justify-content: flex-end;
+    }
   }
 }
 
 .hero-search-form {
   width: 100%;
-  max-width: 380px;
+  max-width: 520px;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    margin: 0 0 0 auto;
+  }
 
   &__title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--color-violet);
-    margin-bottom: 16px;
+    margin-bottom: 20px;
   }
 
   app-input {
     display: block;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+  }
+
+  app-button {
+    margin-top: 8px;
   }
 }
 

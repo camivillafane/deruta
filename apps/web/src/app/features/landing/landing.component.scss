@@ -9,7 +9,7 @@
   &__top {
     display: grid;
     gap: 40px;
-    align-items: start;
+    align-items: stretch;
     margin-bottom: 48px;
 
     @media (min-width: 768px) {
@@ -27,7 +27,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 24px;
+    justify-content: space-between;
   }
 
   &__title {
@@ -47,7 +47,8 @@
     color: var(--color-text-secondary);
     line-height: 1.6;
     max-width: 900px;
-    margin: 0 auto 0 0;
+    margin: 0 auto;
+    text-align: center;
   }
 
   &__actions {

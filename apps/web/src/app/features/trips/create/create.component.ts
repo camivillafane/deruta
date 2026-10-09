@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { TripsService, VehiclesService } from '../../../core/services';
+import { AuthService } from '../../../core/services/auth.service';
 import { Vehicle } from '../../../core/models';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { InputComponent } from '../../../shared/components/input/input.component';
@@ -108,15 +109,27 @@ import { CardComponent } from '../../../shared/components/card/card.component';
               <div class="form-error">{{ errorMessage }}</div>
             }
 
-            <app-button
-              type="submit"
-              variant="primary"
-              size="lg"
-              [fullWidth]="true"
-              [loading]="loading"
-            >
-              Publicar viaje
-            </app-button>
+            @if (verificationBlocked) {
+              <app-button
+                type="button"
+                variant="primary"
+                size="lg"
+                [fullWidth]="true"
+                (clicked)="goToVerification()"
+              >
+                Verificar mi cuenta
+              </app-button>
+            } @else {
+              <app-button
+                type="submit"
+                variant="primary"
+                size="lg"
+                [fullWidth]="true"
+                [loading]="loading"
+              >
+                Publicar viaje
+              </app-button>
+            }
           </form>
         </app-card>
       </div>
@@ -130,11 +143,13 @@ export class CreateTripComponent implements OnInit {
   vehicleOptions: { value: string; label: string }[] = [];
   loading = false;
   errorMessage = '';
+  verificationBlocked = false;
 
   constructor(
     private fb: FormBuilder,
     private tripsService: TripsService,
     private vehiclesService: VehiclesService,
+    private authService: AuthService,
     private router: Router,
   ) {
     this.form = this.fb.group({
@@ -151,6 +166,12 @@ export class CreateTripComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (!this.authService.isVerified()) {
+      this.verificationBlocked = true;
+      this.errorMessage = 'Para publicar un viaje necesitás verificar tu email, teléfono e identidad.';
+      return;
+    }
+
     this.vehiclesService.getMyVehicles().subscribe({
       next: (vehicles) => {
         this.vehicles = vehicles;
@@ -163,6 +184,10 @@ export class CreateTripComponent implements OnInit {
         this.errorMessage = 'Primero debés agregar un vehículo';
       },
     });
+  }
+
+  goToVerification(): void {
+    this.router.navigate(['/verificacion']);
   }
 
   onSubmit(): void {

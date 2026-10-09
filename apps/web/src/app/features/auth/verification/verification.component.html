@@ -1,0 +1,95 @@
+<div class="auth-page">
+  <div class="container">
+    <app-card>
+      <div class="auth-card">
+        <h1 class="page-title">Verificá tu cuenta</h1>
+        <p class="page-subtitle">Para publicar o viajar con confianza necesitamos confirmar tus datos.</p>
+
+        @switch (step) {
+          @case ('email') {
+            <div class="verification-step">
+              <div class="step-header">
+                <span class="step-number">1</span>
+                <div>
+                  <h2>Verificá tu email</h2>
+                  <p>Te enviamos un código de 6 dígitos a {{ user?.email }}</p>
+                </div>
+              </div>
+              <form [formGroup]="emailForm" (ngSubmit)="verifyEmail()" class="auth-form">
+                <app-input
+                  formControlName="code"
+                  label="Código de verificación"
+                  placeholder="123456"
+                  id="emailCode"
+                  [error]="getError(emailForm, 'code')"
+                />
+                <app-button type="submit" variant="primary" [fullWidth]="true" [loading]="loading">Verificar email</app-button>
+              </form>
+              <button class="resend-link" type="button" (click)="resendEmail()">Reenviar código</button>
+            </div>
+          }
+
+          @case ('phone') {
+            <div class="verification-step">
+              <div class="step-header">
+                <span class="step-number">2</span>
+                <div>
+                  <h2>Verificá tu teléfono</h2>
+                  <p>Te enviamos un código de 6 dígitos a {{ user?.phone }}</p>
+                </div>
+              </div>
+              <form [formGroup]="phoneForm" (ngSubmit)="verifyPhone()" class="auth-form">
+                <app-input
+                  formControlName="code"
+                  label="Código de verificación"
+                  placeholder="123456"
+                  id="phoneCode"
+                  [error]="getError(phoneForm, 'code')"
+                />
+                <app-button type="submit" variant="primary" [fullWidth]="true" [loading]="loading">Verificar teléfono</app-button>
+              </form>
+              <button class="resend-link" type="button" (click)="resendPhone()">Reenviar código</button>
+            </div>
+          }
+
+          @case ('identity') {
+            <div class="verification-step">
+              <div class="step-header">
+                <span class="step-number">3</span>
+                <div>
+                  <h2>Verificá tu identidad</h2>
+                  <p>Subí los datos de tu licencia de conducir</p>
+                </div>
+              </div>
+              <form [formGroup]="identityForm" (ngSubmit)="submitIdentity()" class="auth-form">
+                <app-input formControlName="dni" label="DNI" placeholder="12345678" id="dni" [error]="getError(identityForm, 'dni')" />
+                <app-input formControlName="licenseNumber" label="Número de licencia" placeholder="A123456789" id="licenseNumber" [error]="getError(identityForm, 'licenseNumber')" />
+                <app-input formControlName="licenseFrontImage" label="Foto frontal de la licencia (URL)" placeholder="https://..." id="licenseFrontImage" [error]="getError(identityForm, 'licenseFrontImage')" />
+                <app-input formControlName="licenseBackImage" label="Foto dorso de la licencia (URL)" placeholder="https://..." id="licenseBackImage" [error]="getError(identityForm, 'licenseBackImage')" />
+                <app-button type="submit" variant="primary" [fullWidth]="true" [loading]="loading">Enviar documentación</app-button>
+              </form>
+            </div>
+          }
+
+          @case ('pending') {
+            <div class="verification-step verification-step--center">
+              <div class="status-icon">⏳</div>
+              <h2>Documentación en revisión</h2>
+              <p>Ya enviamos tus datos. Cuando un administrador los apruebe vas a poder publicar viajes.</p>
+              <app-button variant="outline" (clicked)="goHome()">Volver al inicio</app-button>
+            </div>
+          }
+
+          @case ('done') {
+            <div class="verification-step verification-step--center">
+              <div class="status-icon">✅</div>
+              <h2>¡Cuenta verificada!</h2>
+              <p>Ya podés publicar viajes y viajar con confianza.</p>
+              <app-button variant="primary" (clicked)="goPublish()">Publicar un viaje</app-button>
+            </div>
+          }
+        }
+      </div>
+    </app-card>
+  </div>
+</div>

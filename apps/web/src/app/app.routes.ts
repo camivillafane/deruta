@@ -15,6 +15,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register.component').then((m) => m.RegisterComponent),
   },
   {
+    path: 'verificacion',
+    loadComponent: () => import('./features/auth/verification/verification.component').then((m) => m.VerificationComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: 'buscar',
     loadComponent: () => import('./features/trips/search/search.component').then((m) => m.SearchComponent),
   },

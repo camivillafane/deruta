@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { toPublicUser } from '../common/utils/user.mapper.js';
-import { Trip, TripRequest, TripStatus } from '../entities/index.js';
+import { Trip, TripRequest, TripStatus, User } from '../entities/index.js';
 import { Vehicle } from '../entities/index.js';
 import { CreateTripDto, SearchTripsDto, UpdateTripDto } from './dto/trip.dto.js';
 
@@ -15,9 +15,16 @@ export class TripsService {
     private readonly vehicleRepository: Repository<Vehicle>,
     @InjectRepository(TripRequest)
     private readonly requestRepository: Repository<TripRequest>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async create(driverId: string, dto: CreateTripDto): Promise<Trip> {
+    const driver = await this.userRepository.findOne({ where: { id: driverId } });
+    if (!driver?.emailVerified || !driver?.phoneVerified || !driver?.identityVerified) {
+      throw new BadRequestException('Tenés que verificar tu email, teléfono e identidad para publicar un viaje');
+    }
+
     const vehicle = await this.vehicleRepository.findOne({
       where: { id: dto.vehicleId, userId: driverId },
     });

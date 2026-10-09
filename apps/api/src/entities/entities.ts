@@ -34,8 +34,41 @@ export class User {
   @Column({ default: false })
   emailVerified: boolean;
 
+  @Column({ nullable: true, type: 'varchar', select: false })
+  emailVerificationCode?: string;
+
+  @Column({ nullable: true, type: 'datetime' })
+  emailVerificationExpiresAt?: Date;
+
   @Column({ default: false })
   phoneVerified: boolean;
+
+  @Column({ nullable: true, type: 'varchar', select: false })
+  phoneVerificationCode?: string;
+
+  @Column({ nullable: true, type: 'datetime' })
+  phoneVerificationExpiresAt?: Date;
+
+  @Column({ nullable: true })
+  dni?: string;
+
+  @Column({ nullable: true })
+  licenseNumber?: string;
+
+  @Column({ nullable: true })
+  licenseFrontImage?: string;
+
+  @Column({ nullable: true })
+  licenseBackImage?: string;
+
+  @Column({ default: false })
+  identityVerified: boolean;
+
+  @Column({ nullable: true, type: 'datetime' })
+  identitySubmittedAt?: Date;
+
+  @Column({ nullable: true, type: 'datetime' })
+  identityVerifiedAt?: Date;
 
   @Column({ type: 'decimal', precision: 2, scale: 1, default: 0 })
   rating: number;

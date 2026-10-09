@@ -7,6 +7,12 @@ export interface User {
   profileImage?: string;
   emailVerified: boolean;
   phoneVerified: boolean;
+  identityVerified: boolean;
+  identitySubmittedAt?: string;
+  dni?: string;
+  licenseNumber?: string;
+  licenseFrontImage?: string;
+  licenseBackImage?: string;
   rating: number;
   totalTrips: number;
   city?: string;
@@ -105,4 +111,6 @@ export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
+  emailVerificationCode?: string;
+  phoneVerificationCode?: string;
 }

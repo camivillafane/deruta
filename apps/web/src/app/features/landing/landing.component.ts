@@ -1,48 +1,70 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { ButtonComponent } from '../../shared/components/button/button.component';
+import { InputComponent } from '../../shared/components/input/input.component';
+import { CardComponent } from '../../shared/components/card/card.component';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, RouterModule, ButtonComponent],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ButtonComponent, InputComponent, CardComponent],
   template: `
     <section class="landing-hero">
       <div class="container landing-hero__content">
         <div class="landing-hero__text">
-          <span class="landing-hero__tagline">Carpooling en Argentina</span>
           <h1 class="landing-hero__title">La plataforma de carpooling definitiva para encontrar tu viaje de manera fácil, rápida y segura.</h1>
           <p class="landing-hero__description">
             DE RUTA conecta conductores con pasajeros que van por el mismo camino. Ahorrá dinero en cada viaje, reducí tu huella ambiental y compartí ruta con personas verificadas. Ya sea que busques un asiento o quieras llenar los lugares libres de tu auto, acá encontrás tu próximo viaje.
           </p>
           <div class="landing-hero__actions">
-            <app-button variant="primary" size="lg" routerLink="/buscar">Buscar un viaje</app-button>
             <app-button variant="secondary" size="lg" routerLink="/publicar">Publicar un viaje</app-button>
-          </div>
-          <div class="landing-hero__tertiary">
-            <a routerLink="/necesito-viajar">Necesito viajar →</a>
           </div>
         </div>
         <div class="landing-hero__visual">
-          <div class="route-card">
-            <div class="route-card__header">
-              <span>Concordia</span>
-              <span class="route-card__arrow">→</span>
-              <span>Buenos Aires</span>
-            </div>
-            <div class="route-card__details">
-              <span>15 de octubre · 08:00 hs</span>
-              <span class="route-card__price">$25.000</span>
-            </div>
-            <div class="route-card__driver">
-              <div class="route-card__avatar">M</div>
-              <div>
-                <div class="route-card__name">Martín</div>
-                <div class="route-card__rating">⭐ 4.9 · 18 viajes</div>
-              </div>
-            </div>
-          </div>
+          <app-card>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="hero-search-form">
+              <h3 class="hero-search-form__title">¿A dónde vas?</h3>
+              <app-input
+                formControlName="origin"
+                label="Origen"
+                placeholder="¿Desde dónde salís?"
+                id="origin"
+                [error]="getError('origin')"
+              />
+              <app-input
+                formControlName="destination"
+                label="Destino"
+                placeholder="¿A dónde vas?"
+                id="destination"
+                [error]="getError('destination')"
+              />
+              <app-input
+                formControlName="departureDate"
+                label="Fecha"
+                type="date"
+                id="departureDate"
+                [error]="getError('departureDate')"
+              />
+              <app-input
+                formControlName="passengers"
+                label="Pasajeros"
+                type="number"
+                min="1"
+                id="passengers"
+                [error]="getError('passengers')"
+              />
+              <app-button
+                type="submit"
+                variant="primary"
+                size="lg"
+                [fullWidth]="true"
+              >
+                Buscar viajes
+              </app-button>
+            </form>
+          </app-card>
         </div>
       </div>
     </section>
@@ -72,4 +94,39 @@ import { ButtonComponent } from '../../shared/components/button/button.component
   `,
   styleUrls: ['./landing.component.scss'],
 })
-export class LandingComponent {}
+export class LandingComponent {
+  form: FormGroup;
+
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+  ) {
+    this.form = this.fb.group({
+      origin: ['', Validators.required],
+      destination: ['', Validators.required],
+      departureDate: ['', Validators.required],
+      passengers: [1, [Validators.required, Validators.min(1)]],
+    });
+  }
+
+  onSubmit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const { origin, destination, departureDate, passengers } = this.form.value;
+    this.router.navigate(['/buscar/resultados'], {
+      queryParams: { origin, destination, departureDate, passengers },
+    });
+  }
+
+  getError(controlName: string): string {
+    const control = this.form.get(controlName);
+    if (control?.invalid && (control.dirty || control.touched)) {
+      if (control.errors?.['required']) return 'Este campo es obligatorio';
+      if (control.errors?.['min']) return 'Mínimo 1 pasajero';
+    }
+    return '';
+  }
+}

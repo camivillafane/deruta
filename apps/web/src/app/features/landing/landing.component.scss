@@ -17,16 +17,6 @@
     }
   }
 
-  &__tagline {
-    display: inline-block;
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: var(--color-orange);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
   &__title {
     font-size: 2.25rem;
     font-weight: 800;
@@ -71,67 +61,20 @@
   }
 }
 
-.route-card {
-  background-color: var(--color-gray-light);
-  border-radius: var(--radius-xl);
-  padding: 24px;
+.hero-search-form {
   width: 100%;
-  max-width: 340px;
-  box-shadow: var(--shadow-lg);
+  max-width: 380px;
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  &__title {
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--color-violet);
-    margin-bottom: 8px;
+    margin-bottom: 16px;
   }
 
-  &__arrow {
-    color: var(--color-orange);
-  }
-
-  &__details {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9375rem;
-    color: var(--color-text-secondary);
-    margin-bottom: 20px;
-  }
-
-  &__price {
-    font-weight: 700;
-    color: var(--color-orange);
-  }
-
-  &__driver {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  &__avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-orange) 0%, var(--color-magenta) 100%);
-    color: var(--color-white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-  }
-
-  &__name {
-    font-weight: 600;
-    color: var(--color-text);
-  }
-
-  &__rating {
-    font-size: 0.8125rem;
-    color: var(--color-text-secondary);
+  app-input {
+    display: block;
+    margin-bottom: 12px;
   }
 }
 

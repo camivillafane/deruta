@@ -9,6 +9,7 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 import { BadgeComponent } from '../../../shared/components/badge/badge.component';
 import { RatingComponent } from '../../../shared/components/rating/rating.component';
 import { AvatarComponent } from '../../../shared/components/avatar/avatar.component';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-trip-detail',
@@ -28,6 +29,7 @@ export class TripDetailComponent implements OnInit {
     private tripsService: TripsService,
     private tripRequestsService: TripRequestsService,
     private authService: AuthService,
+    private toastService: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -64,12 +66,13 @@ export class TripDetailComponent implements OnInit {
     this.tripRequestsService.create({ tripId: this.trip.id }).subscribe({
       next: () => {
         this.requesting = false;
-        alert('Solicitud enviada');
+        this.toastService.success('Solicitud enviada');
         this.router.navigate(['/mis-viajes']);
       },
-      error: () => {
+      error: (err) => {
         this.requesting = false;
-        alert('Error al enviar la solicitud');
+        const message = err?.error?.message || 'Error al enviar la solicitud';
+        this.toastService.error(message);
       },
     });
   }

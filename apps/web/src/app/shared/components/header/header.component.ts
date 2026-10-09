@@ -12,7 +12,7 @@ import { ButtonComponent } from '../button/button.component';
     <header class="app-header">
       <div class="container app-header__container">
         <a routerLink="/" class="app-header__logo" aria-label="DE RUTA - Inicio">
-          <img src="/logo.svg" alt="DE RUTA" class="app-header__logo-img" width="120" height="40" />
+          <img src="/logo_deruta.png" alt="DE RUTA" class="app-header__logo-img" width="120" height="40" />
           <span class="app-header__logo-text">DE RUTA</span>
         </a>
 

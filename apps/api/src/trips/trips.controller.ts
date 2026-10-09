@@ -50,6 +50,15 @@ export class TripsController {
     return this.tripsService.findOne(id);
   }
 
+  @Get(':id/me')
+  @UseGuards(JwtAuthGuard)
+  findMyRequest(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('userId') userId: string,
+  ) {
+    return this.tripsService.findMyRequest(id, userId);
+  }
+
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   update(

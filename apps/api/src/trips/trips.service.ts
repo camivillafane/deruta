@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { toPublicUser } from '../common/utils/user.mapper.js';
-import { Trip, TripStatus } from '../entities/index.js';
+import { Trip, TripRequest, TripStatus } from '../entities/index.js';
 import { Vehicle } from '../entities/index.js';
 import { CreateTripDto, SearchTripsDto, UpdateTripDto } from './dto/trip.dto.js';
 
@@ -13,6 +13,8 @@ export class TripsService {
     private readonly tripRepository: Repository<Trip>,
     @InjectRepository(Vehicle)
     private readonly vehicleRepository: Repository<Vehicle>,
+    @InjectRepository(TripRequest)
+    private readonly requestRepository: Repository<TripRequest>,
   ) {}
 
   async create(driverId: string, dto: CreateTripDto): Promise<Trip> {
@@ -118,6 +120,18 @@ export class TripsService {
         passenger: toPublicUser(request.passenger) as Trip['requests'][number]['passenger'],
       })),
     }));
+  }
+
+  async findMyRequest(tripId: string, userId: string): Promise<{ request: TripRequest | null }> {
+    const trip = await this.tripRepository.findOne({ where: { id: tripId } });
+    if (!trip) {
+      throw new NotFoundException('Viaje no encontrado');
+    }
+    const request = await this.requestRepository.findOne({
+      where: { tripId, passengerId: userId },
+      relations: { passenger: true },
+    });
+    return { request };
   }
 
   async complete(id: string, driverId: string): Promise<Trip> {

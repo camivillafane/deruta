@@ -35,8 +35,12 @@ export class TripDetailComponent implements OnInit {
     if (id) {
       this.tripsService.getById(id).subscribe((trip) => {
         this.trip = trip;
-        this.myRequest = trip.requests?.find((r) => r.passengerId === this.authService.getCurrentUser()?.id) || null;
       });
+      if (this.authService.isAuthenticated()) {
+        this.tripsService.getMyRequest(id).subscribe(({ request }) => {
+          this.myRequest = request;
+        });
+      }
     }
   }
 

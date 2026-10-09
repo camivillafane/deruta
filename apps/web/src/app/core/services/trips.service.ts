@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Trip } from '../models';
+import { Trip, TripRequest } from '../models';
 
 export interface SearchTripsParams {
   origin: string;
@@ -61,5 +61,9 @@ export class TripsService {
 
   complete(id: string): Observable<Trip> {
     return this.http.post<Trip>(`${this.apiUrl}/${id}/complete`, {});
+  }
+
+  getMyRequest(id: string): Observable<{ request: TripRequest | null }> {
+    return this.http.get<{ request: TripRequest | null }>(`${this.apiUrl}/${id}/me`);
   }
 }

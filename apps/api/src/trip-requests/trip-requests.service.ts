@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Trip, TripStatus } from '../entities/index.js';
 import { TripRequest, TripRequestStatus } from '../entities/index.js';
+import { Conversation } from '../entities/index.js';
 import { CreateTripRequestDto, UpdateTripRequestStatusDto } from './dto/trip-request.dto.js';
 
 @Injectable()
@@ -12,6 +13,8 @@ export class TripRequestsService {
     private readonly requestRepository: Repository<TripRequest>,
     @InjectRepository(Trip)
     private readonly tripRepository: Repository<Trip>,
+    @InjectRepository(Conversation)
+    private readonly conversationRepository: Repository<Conversation>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -103,6 +106,14 @@ export class TripRequestsService {
         }
         request.trip.availableSeats -= request.seats;
         await manager.save(request.trip);
+
+        const existingConversation = await manager.findOne(Conversation, {
+          where: { tripId: request.tripId },
+        });
+        if (!existingConversation) {
+          const conversation = manager.create(Conversation, { tripId: request.tripId });
+          await manager.save(conversation);
+        }
       }
 
       if (

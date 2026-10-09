@@ -5,7 +5,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { compare, hash } from 'bcryptjs';
-import { randomBytes } from 'crypto';
 import { UsersService } from '../users/users.service.js';
 import { LoginDto, RegisterDto } from './dto/auth.dto.js';
 
@@ -84,11 +83,12 @@ export class AuthService {
 
   private async generateTokens(user: Awaited<ReturnType<typeof this.usersService.findById>>): Promise<AuthResponse> {
     const payload: TokenPayload = { sub: user.id, email: user.email };
-    const signOptions: JwtSignOptions = {
+    const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m') as JwtSignOptions['expiresIn'],
-    };
-    const accessToken = this.jwtService.sign(payload, signOptions);
-    const refreshToken = randomBytes(32).toString('hex');
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d') as JwtSignOptions['expiresIn'],
+    });
 
     await this.usersService.setRefreshTokenHash(
       user.id,

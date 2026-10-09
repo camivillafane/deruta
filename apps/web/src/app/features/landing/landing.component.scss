@@ -1,9 +1,9 @@
 .landing-hero {
   background-color: var(--color-white);
-  padding: 48px 0 0;
+  padding: 48px 0 24px;
 
   @media (min-width: 768px) {
-    padding: 80px 0 0;
+    padding: 80px 0 32px;
   }
 
   &__top {

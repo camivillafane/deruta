@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { toPublicUser } from '../common/utils/user.mapper.js';
 import { Conversation } from '../entities/index.js';
 import { Message } from '../entities/index.js';
 import { Trip } from '../entities/index.js';
@@ -54,7 +55,9 @@ export class ConversationsService {
       .getMany();
 
     const map = new Map<string, Conversation>();
-    [...asDriver, ...asPassenger].forEach((c) => map.set(c.id, c));
+    [...asDriver, ...asPassenger].forEach((c) => {
+      map.set(c.id, { ...c, trip: { ...c.trip, driver: toPublicUser(c.trip.driver) as Trip['driver'] } });
+    });
     return Array.from(map.values());
   }
 
@@ -68,7 +71,7 @@ export class ConversationsService {
     }
 
     await this.validateAccess(userId, conversation.tripId);
-    return conversation;
+    return { ...conversation, trip: { ...conversation.trip, driver: toPublicUser(conversation.trip.driver) as Trip['driver'] } };
   }
 
   async sendMessage(senderId: string, dto: SendMessageDto): Promise<Message> {
@@ -83,11 +86,15 @@ export class ConversationsService {
 
   async findMessages(conversationId: string, userId: string): Promise<Message[]> {
     await this.findOne(conversationId, userId);
-    return this.messageRepository.find({
+    const messages = await this.messageRepository.find({
       where: { conversationId },
       relations: { sender: true },
       order: { createdAt: 'ASC' },
     });
+    return messages.map((message) => ({
+      ...message,
+      sender: toPublicUser(message.sender) as Message['sender'],
+    }));
   }
 
   private async validateAccess(userId: string, tripId: string): Promise<void> {

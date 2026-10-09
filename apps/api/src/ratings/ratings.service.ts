@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { toPublicUser } from '../common/utils/user.mapper.js';
 import { Rating } from '../entities/index.js';
 import { Trip, TripStatus } from '../entities/index.js';
 import { TripRequest, TripRequestStatus } from '../entities/index.js';
@@ -72,10 +73,14 @@ export class RatingsService {
   }
 
   async findByUser(userId: string): Promise<Rating[]> {
-    return this.ratingRepository.find({
+    const ratings = await this.ratingRepository.find({
       where: { reviewedUserId: userId },
       relations: { reviewer: true },
       order: { createdAt: 'DESC' },
     });
+    return ratings.map((rating) => ({
+      ...rating,
+      reviewer: toPublicUser(rating.reviewer) as Rating['reviewer'],
+    }));
   }
 }

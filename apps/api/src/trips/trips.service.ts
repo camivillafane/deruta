@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { toPublicUser } from '../common/utils/user.mapper.js';
 import { Trip, TripStatus } from '../entities/index.js';
 import { Vehicle } from '../entities/index.js';
 import { CreateTripDto, SearchTripsDto, UpdateTripDto } from './dto/trip.dto.js';
@@ -48,7 +49,8 @@ export class TripsService {
       query.andWhere('trip.availableSeats >= :passengers', { passengers: dto.passengers });
     }
 
-    return query.getMany();
+    const trips = await query.getMany();
+    return trips.map((trip) => ({ ...trip, driver: toPublicUser(trip.driver) as Trip['driver'] }));
   }
 
   async findAll(filters?: { origin?: string; destination?: string; date?: string }): Promise<Trip[]> {
@@ -70,7 +72,8 @@ export class TripsService {
       query.andWhere('trip.departureDate = :date', { date: filters.date });
     }
 
-    return query.getMany();
+    const trips = await query.getMany();
+    return trips.map((trip) => ({ ...trip, driver: toPublicUser(trip.driver) as Trip['driver'] }));
   }
 
   async findOne(id: string): Promise<Trip> {
@@ -81,7 +84,7 @@ export class TripsService {
     if (!trip) {
       throw new NotFoundException('Viaje no encontrado');
     }
-    return trip;
+    return { ...trip, driver: toPublicUser(trip.driver) as Trip['driver'] };
   }
 
   async update(id: string, driverId: string, dto: UpdateTripDto): Promise<Trip> {
@@ -103,11 +106,18 @@ export class TripsService {
   }
 
   async findByDriver(driverId: string): Promise<Trip[]> {
-    return this.tripRepository.find({
+    const trips = await this.tripRepository.find({
       where: { driverId },
       relations: { vehicle: true, requests: { passenger: true } },
       order: { departureDate: 'DESC', departureTime: 'DESC' },
     });
+    return trips.map((trip) => ({
+      ...trip,
+      requests: trip.requests?.map((request) => ({
+        ...request,
+        passenger: toPublicUser(request.passenger) as Trip['requests'][number]['passenger'],
+      })),
+    }));
   }
 
   async complete(id: string, driverId: string): Promise<Trip> {

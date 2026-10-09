@@ -10,11 +10,12 @@
     display: grid;
     gap: 40px;
     align-items: stretch;
-    margin-bottom: 48px;
+    margin-bottom: 64px;
 
     @media (min-width: 768px) {
       grid-template-columns: 1fr 1fr;
       gap: 48px;
+      margin-bottom: 80px;
     }
 
     @media (min-width: 1024px) {
@@ -28,6 +29,7 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: space-between;
+    padding-bottom: 32px;
   }
 
   &__title {

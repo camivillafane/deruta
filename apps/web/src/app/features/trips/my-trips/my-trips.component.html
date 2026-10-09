@@ -84,7 +84,12 @@
                     </div>
                   }
                 </div>
-                <app-button variant="outline" size="sm" [routerLink]="['/viajes', trip.id]">Ver viaje</app-button>
+                <div class="request-card__actions">
+                  <app-button variant="outline" size="sm" [routerLink]="['/viajes', trip.id]">Ver viaje</app-button>
+                  @if (trip.status === 'active') {
+                    <app-button variant="secondary" size="sm" (clicked)="completeTrip(trip.id)">Completar</app-button>
+                  }
+                </div>
               </div>
             </app-card>
           }

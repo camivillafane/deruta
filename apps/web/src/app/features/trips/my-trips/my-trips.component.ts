@@ -59,6 +59,10 @@ export class MyTripsComponent implements OnInit {
     this.tripRequestsService.cancel(id).subscribe(() => this.loadData());
   }
 
+  completeTrip(id: string): void {
+    this.tripsService.complete(id).subscribe(() => this.loadData());
+  }
+
   getStatusVariant(status: string): BadgeVariant {
     switch (status) {
       case 'accepted':
@@ -87,7 +91,7 @@ export class MyTripsComponent implements OnInit {
   }
 
   canRate(trip: Trip, request?: TripRequest): boolean {
-    if (trip.status !== 'completed' && new Date(trip.departureDate) >= new Date()) {
+    if (trip.status !== 'completed') {
       return false;
     }
     const otherUserId = request ? request.passengerId : trip.driverId;

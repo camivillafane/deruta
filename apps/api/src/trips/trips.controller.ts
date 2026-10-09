@@ -65,4 +65,10 @@ export class TripsController {
   remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('userId') userId: string) {
     return this.tripsService.remove(id, userId);
   }
+
+  @Post(':id/complete')
+  @UseGuards(JwtAuthGuard)
+  complete(@Param('id', ParseUUIDPipe) id: string, @CurrentUser('userId') userId: string) {
+    return this.tripsService.complete(id, userId);
+  }
 }

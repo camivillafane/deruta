@@ -110,6 +110,18 @@ export class TripsService {
     });
   }
 
+  async complete(id: string, driverId: string): Promise<Trip> {
+    const trip = await this.findOne(id);
+    if (trip.driverId !== driverId) {
+      throw new ForbiddenException('No podés completar este viaje');
+    }
+    if (trip.status !== TripStatus.ACTIVE) {
+      throw new BadRequestException('Solo se pueden completar viajes activos');
+    }
+    trip.status = TripStatus.COMPLETED;
+    return this.tripRepository.save(trip);
+  }
+
   private async notifyMatchingAlerts(_trip: Trip): Promise<void> {
     // Se implementará en el módulo de alertas/notificaciones
   }

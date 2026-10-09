@@ -58,4 +58,8 @@ export class TripsService {
   getMyTrips(): Observable<Trip[]> {
     return this.http.get<Trip[]>(`${this.apiUrl}/driver/my-trips`);
   }
+
+  complete(id: string): Observable<Trip> {
+    return this.http.post<Trip>(`${this.apiUrl}/${id}/complete`, {});
+  }
 }

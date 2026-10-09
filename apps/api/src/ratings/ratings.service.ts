@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Rating } from '../entities/index.js';
-import { Trip } from '../entities/index.js';
+import { Trip, TripStatus } from '../entities/index.js';
 import { TripRequest, TripRequestStatus } from '../entities/index.js';
 import { UsersService } from '../users/users.service.js';
 import { CreateRatingDto } from './dto/rating.dto.js';
@@ -22,20 +22,20 @@ export class RatingsService {
   async create(reviewerId: string, dto: CreateRatingDto): Promise<Rating> {
     const trip = await this.tripRepository.findOne({
       where: { id: dto.tripId },
-      relations: { driver: true },
+      relations: { driver: true, requests: { passenger: true } },
     });
     if (!trip) {
       throw new NotFoundException('Viaje no encontrado');
     }
 
+    if (trip.status !== TripStatus.COMPLETED) {
+      throw new BadRequestException('Solo podés calificar viajes completados');
+    }
+
     const isDriver = trip.driverId === reviewerId;
-    const acceptedRequest = await this.requestRepository.findOne({
-      where: {
-        tripId: dto.tripId,
-        passengerId: reviewerId,
-        status: TripRequestStatus.ACCEPTED,
-      },
-    });
+    const acceptedRequest = trip.requests?.find(
+      (request) => request.passengerId === reviewerId && request.status === TripRequestStatus.ACCEPTED,
+    );
     const isPassenger = !!acceptedRequest;
 
     if (!isDriver && !isPassenger) {
@@ -45,6 +45,13 @@ export class RatingsService {
     const reviewedUserId = dto.reviewedUserId;
     if (reviewerId === reviewedUserId) {
       throw new BadRequestException('No podés calificarte a vos mismo');
+    }
+
+    const validReviewedUserId = isDriver
+      ? acceptedRequest?.passengerId
+      : trip.driverId;
+    if (reviewedUserId !== validReviewedUserId) {
+      throw new BadRequestException('Solo podés calificar a la contraparte de este viaje');
     }
 
     const existing = await this.ratingRepository.findOne({

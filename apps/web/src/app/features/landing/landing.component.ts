@@ -70,7 +70,12 @@ import { CardComponent } from '../../shared/components/card/card.component';
           </div>
         </div>
 
-        <p class="landing-hero__description">
+      </div>
+    </section>
+
+    <section class="landing-description">
+      <div class="container">
+        <p class="landing-description__text">
           DE RUTA conecta conductores con pasajeros que van por el mismo camino. Ahorrá dinero en cada viaje, reducí tu huella ambiental y compartí ruta con personas verificadas. Ya sea que busques un asiento o quieras llenar los lugares libres de tu auto, acá encontrás tu próximo viaje.
         </p>
       </div>

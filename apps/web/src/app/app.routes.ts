@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -60,6 +61,11 @@ export const routes: Routes = [
     path: 'perfil',
     loadComponent: () => import('./features/profile/profile.component').then((m) => m.ProfileComponent),
     canActivate: [authGuard],
+  },
+  {
+    path: 'admin/verificaciones',
+    loadComponent: () => import('./features/admin/admin-verifications.component').then((m) => m.AdminVerificationsComponent),
+    canActivate: [authGuard, adminGuard],
   },
   {
     path: '**',

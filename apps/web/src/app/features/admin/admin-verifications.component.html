@@ -1,0 +1,38 @@
+<div class="page">
+  <div class="container">
+    <h1 class="page-title">Verificaciones pendientes</h1>
+    <p class="page-subtitle">Revisá la documentación de los usuarios que quieren publicar viajes.</p>
+
+    @if (loading) {
+      <p>Cargando...</p>
+    } @else if (users.length === 0) {
+      <app-empty-state icon="✅" title="No hay solicitudes pendientes" description="Todos los usuarios están verificados."></app-empty-state>
+    } @else {
+      <div class="verification-list">
+        @for (user of users; track user.id) {
+          <app-card>
+            <div class="verification-card">
+              <div class="verification-card__info">
+                <h3>{{ user.name }} {{ user.lastName }}</h3>
+                <p>{{ user.email }} · {{ user.phone }}</p>
+                <p>DNI: {{ user.dni }} · Licencia: {{ user.licenseNumber }}</p>
+              </div>
+              <div class="verification-card__docs">
+                <a [href]="user.licenseFrontImage" target="_blank" rel="noopener">
+                  <img [src]="user.licenseFrontImage" alt="Frente licencia" />
+                </a>
+                <a [href]="user.licenseBackImage" target="_blank" rel="noopener">
+                  <img [src]="user.licenseBackImage" alt="Dorso licencia" />
+                </a>
+              </div>
+              <div class="verification-card__actions">
+                <app-button variant="primary" size="sm" (clicked)="approve(user)">Aprobar</app-button>
+                <app-button variant="ghost" size="sm" (clicked)="reject(user)">Rechazar</app-button>
+              </div>
+            </div>
+          </app-card>
+        }
+      </div>
+    }
+  </div>
+</div>

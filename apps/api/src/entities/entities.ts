@@ -31,6 +31,9 @@ export class User {
   @Column({ nullable: true })
   profileImage: string;
 
+  @Column({ type: 'varchar', length: 20, default: 'user' })
+  role: 'user' | 'admin';
+
   @Column({ default: false })
   emailVerified: boolean;
 

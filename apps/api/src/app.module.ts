@@ -16,6 +16,7 @@ import { ConversationsModule } from './conversations/conversations.module.js';
 import { MessagesModule } from './messages/messages.module.js';
 import { AlertsModule } from './alerts/alerts.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
+import { AdminModule } from './admin/admin.module.js';
 import { SeedModule } from './seeds/seed.module.js';
 import {
   Alert,
@@ -73,6 +74,7 @@ import {
     MessagesModule,
     AlertsModule,
     NotificationsModule,
+    AdminModule,
     SeedModule,
   ],
   controllers: [AppController],

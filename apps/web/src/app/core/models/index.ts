@@ -7,6 +7,7 @@ export interface User {
   profileImage?: string;
   emailVerified: boolean;
   phoneVerified: boolean;
+  role: 'user' | 'admin';
   identityVerified: boolean;
   identitySubmittedAt?: string;
   dni?: string;

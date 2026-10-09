@@ -166,6 +166,9 @@ export class Trip {
   @Column({ nullable: true })
   vehicleId: string;
 
+  @OneToMany(() => TripRequest, (request) => request.trip)
+  requests: TripRequest[];
+
   @CreateDateColumn()
   createdAt: Date;
 

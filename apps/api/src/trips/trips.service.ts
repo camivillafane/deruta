@@ -105,7 +105,7 @@ export class TripsService {
   async findByDriver(driverId: string): Promise<Trip[]> {
     return this.tripRepository.find({
       where: { driverId },
-      relations: { vehicle: true },
+      relations: { vehicle: true, requests: { passenger: true } },
       order: { departureDate: 'DESC', departureTime: 'DESC' },
     });
   }

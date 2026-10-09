@@ -18,7 +18,7 @@ async function bootstrap() {
     whitelist: true,
     forbidNonWhitelisted: true,
     transform: true,
-    transformOptions: { enableImplicitConversion: false },
+    transformOptions: { enableImplicitConversion: true },
   }));
 
   const port = configService.get('API_PORT', 3000);

@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Trip, TripStatus } from '../entities/index.js';
 import { TripRequest, TripRequestStatus } from '../entities/index.js';
 import { CreateTripRequestDto, UpdateTripRequestStatusDto } from './dto/trip-request.dto.js';
@@ -12,45 +12,49 @@ export class TripRequestsService {
     private readonly requestRepository: Repository<TripRequest>,
     @InjectRepository(Trip)
     private readonly tripRepository: Repository<Trip>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(passengerId: string, dto: CreateTripRequestDto): Promise<TripRequest> {
-    const trip = await this.tripRepository.findOne({
-      where: { id: dto.tripId },
+    return this.dataSource.transaction(async (manager) => {
+      const trip = await manager.findOne(Trip, {
+        where: { id: dto.tripId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!trip) {
+        throw new NotFoundException('Viaje no encontrado');
+      }
+      if (trip.driverId === passengerId) {
+        throw new BadRequestException('No podés solicitar lugar en tu propio viaje');
+      }
+      if (trip.status !== TripStatus.ACTIVE) {
+        throw new BadRequestException('Este viaje no está activo');
+      }
+
+      const seats = dto.seats || 1;
+      const acceptedSeats = await this.getAcceptedSeatsWithManager(manager, dto.tripId);
+
+      if (acceptedSeats + seats > trip.availableSeats) {
+        throw new BadRequestException('No hay suficientes lugares disponibles');
+      }
+
+      const existing = await manager.findOne(TripRequest, {
+        where: { tripId: dto.tripId, passengerId },
+      });
+      if (existing) {
+        throw new BadRequestException('Ya solicitaste lugar en este viaje');
+      }
+
+      const request = manager.create(TripRequest, {
+        tripId: dto.tripId,
+        passengerId,
+        seats,
+        message: dto.message,
+        status: TripRequestStatus.PENDING,
+      });
+
+      return manager.save(request);
     });
-    if (!trip) {
-      throw new NotFoundException('Viaje no encontrado');
-    }
-    if (trip.driverId === passengerId) {
-      throw new BadRequestException('No podés solicitar lugar en tu propio viaje');
-    }
-    if (trip.status !== TripStatus.ACTIVE) {
-      throw new BadRequestException('Este viaje no está activo');
-    }
-
-    const seats = dto.seats || 1;
-    const acceptedSeats = await this.getAcceptedSeats(dto.tripId);
-
-    if (acceptedSeats + seats > trip.availableSeats) {
-      throw new BadRequestException('No hay suficientes lugares disponibles');
-    }
-
-    const existing = await this.requestRepository.findOne({
-      where: { tripId: dto.tripId, passengerId },
-    });
-    if (existing) {
-      throw new BadRequestException('Ya solicitaste lugar en este viaje');
-    }
-
-    const request = this.requestRepository.create({
-      tripId: dto.tripId,
-      passengerId,
-      seats,
-      message: dto.message,
-      status: TripRequestStatus.PENDING,
-    });
-
-    return this.requestRepository.save(request);
   }
 
   async findByPassenger(passengerId: string): Promise<TripRequest[]> {
@@ -77,46 +81,85 @@ export class TripRequestsService {
     driverId: string,
     dto: UpdateTripRequestStatusDto,
   ): Promise<TripRequest> {
-    const request = await this.requestRepository.findOne({
-      where: { id: requestId },
-      relations: { trip: true },
-    });
-    if (!request) {
-      throw new NotFoundException('Solicitud no encontrada');
-    }
-    if (request.trip.driverId !== driverId) {
-      throw new ForbiddenException('No podés gestionar esta solicitud');
-    }
-
-    if (dto.status === TripRequestStatus.ACCEPTED) {
-      const acceptedSeats = await this.getAcceptedSeats(request.tripId, request.id);
-      if (acceptedSeats + request.seats > request.trip.availableSeats) {
-        throw new BadRequestException('No hay suficientes lugares disponibles');
+    return this.dataSource.transaction(async (manager) => {
+      const request = await manager.findOne(TripRequest, {
+        where: { id: requestId },
+        relations: { trip: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!request) {
+        throw new NotFoundException('Solicitud no encontrada');
       }
-    }
+      if (request.trip.driverId !== driverId) {
+        throw new ForbiddenException('No podés gestionar esta solicitud');
+      }
 
-    request.status = dto.status;
-    return this.requestRepository.save(request);
+      this.validateStatusTransition(request.status, dto.status);
+
+      if (dto.status === TripRequestStatus.ACCEPTED) {
+        const acceptedSeats = await this.getAcceptedSeatsWithManager(manager, request.tripId, request.id);
+        if (acceptedSeats + request.seats > request.trip.availableSeats) {
+          throw new BadRequestException('No hay suficientes lugares disponibles');
+        }
+        request.trip.availableSeats -= request.seats;
+        await manager.save(request.trip);
+      }
+
+      if (
+        request.status === TripRequestStatus.ACCEPTED &&
+        (dto.status === TripRequestStatus.REJECTED || dto.status === TripRequestStatus.CANCELLED)
+      ) {
+        request.trip.availableSeats += request.seats;
+        await manager.save(request.trip);
+      }
+
+      request.status = dto.status;
+      return manager.save(request);
+    });
   }
 
   async cancelRequest(requestId: string, passengerId: string): Promise<TripRequest> {
-    const request = await this.requestRepository.findOne({
-      where: { id: requestId, passengerId },
-      relations: { trip: true },
+    return this.dataSource.transaction(async (manager) => {
+      const request = await manager.findOne(TripRequest, {
+        where: { id: requestId, passengerId },
+        relations: { trip: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!request) {
+        throw new NotFoundException('Solicitud no encontrada');
+      }
+      if (request.status === TripRequestStatus.CANCELLED) {
+        throw new BadRequestException('La solicitud ya está cancelada');
+      }
+      if (request.status === TripRequestStatus.ACCEPTED) {
+        request.trip.availableSeats += request.seats;
+        await manager.save(request.trip);
+      }
+      request.status = TripRequestStatus.CANCELLED;
+      return manager.save(request);
     });
-    if (!request) {
-      throw new NotFoundException('Solicitud no encontrada');
-    }
-    if (request.status === TripRequestStatus.CANCELLED) {
-      throw new BadRequestException('La solicitud ya está cancelada');
-    }
-    request.status = TripRequestStatus.CANCELLED;
-    return this.requestRepository.save(request);
   }
 
-  private async getAcceptedSeats(tripId: string, excludeRequestId?: string): Promise<number> {
-    const query = this.requestRepository
-      .createQueryBuilder('request')
+  private validateStatusTransition(current: TripRequestStatus, next: TripRequestStatus): void {
+    const allowed: Record<TripRequestStatus, TripRequestStatus[]> = {
+      [TripRequestStatus.PENDING]: [TripRequestStatus.ACCEPTED, TripRequestStatus.REJECTED],
+      [TripRequestStatus.ACCEPTED]: [TripRequestStatus.REJECTED, TripRequestStatus.CANCELLED],
+      [TripRequestStatus.REJECTED]: [],
+      [TripRequestStatus.CANCELLED]: [],
+    };
+
+    if (!allowed[current].includes(next)) {
+      throw new BadRequestException(`No se puede cambiar el estado de ${current} a ${next}`);
+    }
+  }
+
+  private async getAcceptedSeatsWithManager(
+    manager: any,
+    tripId: string,
+    excludeRequestId?: string,
+  ): Promise<number> {
+    const query = manager
+      .createQueryBuilder(TripRequest, 'request')
       .select('SUM(request.seats)', 'total')
       .where('request.tripId = :tripId', { tripId })
       .andWhere('request.status = :status', { status: TripRequestStatus.ACCEPTED });

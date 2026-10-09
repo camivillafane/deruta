@@ -1,0 +1,46 @@
+.app-select {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  &__field {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--color-gray);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 0.9375rem;
+    background-color: var(--color-white);
+    color: var(--color-text);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23636366' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-orange);
+      box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+    }
+
+    &--error {
+      border-color: var(--color-error);
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.1);
+      }
+    }
+  }
+
+  &__error {
+    font-size: 0.8125rem;
+    color: var(--color-error);
+  }
+}

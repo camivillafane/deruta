@@ -1,0 +1,27 @@
+<div class="page">
+  <div class="container">
+    <h1 class="page-title">Mensajes</h1>
+
+    @if (conversations.length === 0) {
+      <app-empty-state icon="💬" title="No tenés mensajes" description="Las conversaciones aparecen cuando una solicitud es aceptada."></app-empty-state>
+    } @else {
+      <div class="conversations-list">
+        @for (conversation of conversations; track conversation.id) {
+          <app-card>
+            <a [routerLink]="['/mensajes', conversation.id]" class="conversation-item">
+              <app-avatar [name]="conversation.trip.driver.name" [size]="48"></app-avatar>
+              <div class="conversation-item__info">
+                <div class="conversation-item__route">
+                  {{ conversation.trip.origin }} → {{ conversation.trip.destination }}
+                </div>
+                <div class="conversation-item__meta">
+                  {{ conversation.trip.departureDate | date:'dd/MM/yyyy' }} · {{ conversation.trip.departureTime.slice(0,5) }} hs
+                </div>
+              </div>
+            </a>
+          </app-card>
+        }
+      </div>
+    }
+  </div>
+</div>

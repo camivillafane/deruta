@@ -1,0 +1,9 @@
+export { AuthService } from './auth.service';
+export { TripsService } from './trips.service';
+export { TripRequestsService } from './trip-requests.service';
+export { VehiclesService } from './vehicles.service';
+export { SearchesService } from './searches.service';
+export { AlertsService } from './alerts.service';
+export { ConversationsService } from './conversations.service';
+export { UsersService } from './users.service';
+export { RatingsService } from './ratings.service';

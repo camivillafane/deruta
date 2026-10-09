@@ -1,0 +1,74 @@
+<div class="page">
+  <div class="container">
+    @if (trip) {
+      <app-card>
+        <div class="trip-detail">
+          <div class="trip-detail__route">
+            <span>{{ trip.origin }}</span>
+            <span class="trip-detail__arrow">→</span>
+            <span>{{ trip.destination }}</span>
+          </div>
+          <div class="trip-detail__meta">
+            <span>{{ trip.departureDate | date:'dd/MM/yyyy' }}</span>
+            <span>{{ trip.departureTime.slice(0,5) }} hs</span>
+            <app-badge>{{ trip.availableSeats }} lugares disponibles</app-badge>
+          </div>
+
+          <div class="trip-detail__section">
+            <h3>Punto de encuentro</h3>
+            <p>{{ trip.meetingPoint || 'No especificado' }}</p>
+          </div>
+
+          <div class="trip-detail__section">
+            <h3>Aporte por pasajero</h3>
+            <p class="trip-detail__price">${{ formatPrice(trip.contributionPerPassenger) }}</p>
+          </div>
+
+          @if (trip.notes) {
+            <div class="trip-detail__section">
+              <h3>Notas del viaje</h3>
+              <p>{{ trip.notes }}</p>
+            </div>
+          }
+
+          <div class="trip-detail__driver">
+            <app-avatar [name]="trip.driver.name" [size]="56"></app-avatar>
+            <div>
+              <h3>{{ trip.driver.name }} {{ trip.driver.lastName }}</h3>
+              <app-rating [value]="trip.driver.rating"></app-rating>
+              <p>{{ trip.driver.totalTrips }} viajes realizados</p>
+            </div>
+          </div>
+
+          @if (trip.vehicle) {
+            <div class="trip-detail__section">
+              <h3>Vehículo</h3>
+              <p>
+                {{ trip.vehicle.brand }} {{ trip.vehicle.model }}
+                @if (trip.vehicle.year) { ({{ trip.vehicle.year }}) }
+                · {{ trip.vehicle.color }}
+                @if (trip.vehicle.plate) { · {{ trip.vehicle.plate }}}
+              </p>
+            </div>
+          }
+
+          @if (canRequest()) {
+            <app-button
+              variant="primary"
+              size="lg"
+              [fullWidth]="true"
+              [loading]="requesting"
+              (clicked)="requestSeat()"
+            >
+              Solicitar lugar
+            </app-button>
+          } @else if (alreadyRequested()) {
+            <app-button variant="outline" size="lg" [fullWidth]="true" [disabled]="true">
+              Solicitud enviada
+            </app-button>
+          }
+        </div>
+      </app-card>
+    }
+  </div>
+</div>

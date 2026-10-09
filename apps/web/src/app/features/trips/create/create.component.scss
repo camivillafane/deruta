@@ -1,0 +1,23 @@
+.create-trip-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: grid;
+  gap: 16px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.form-error {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background-color: rgba(255, 59, 48, 0.08);
+  color: var(--color-error);
+  font-size: 0.875rem;
+  text-align: center;
+}

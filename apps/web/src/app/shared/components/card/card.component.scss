@@ -1,0 +1,11 @@
+.app-card {
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+
+  @media (min-width: 768px) {
+    padding: 24px;
+  }
+}

@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: deruta-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-deruta}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-deruta}
+      POSTGRES_DB: ${DB_NAME:-deruta}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-deruta} -d ${DB_NAME:-deruta}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

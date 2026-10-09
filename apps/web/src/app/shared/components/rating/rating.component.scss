@@ -1,0 +1,21 @@
+.app-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  &__star {
+    color: var(--color-gray);
+    font-size: 1rem;
+
+    &.filled {
+      color: var(--color-warning);
+    }
+  }
+
+  &__value {
+    margin-left: 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
+}

@@ -1,0 +1,78 @@
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+
+  &__tab {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: var(--radius-md);
+    background-color: var(--color-white);
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &.active {
+      background-color: var(--color-violet);
+      color: var(--color-white);
+    }
+  }
+}
+
+.trips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.request-card {
+  &__route {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-violet);
+    margin-bottom: 8px;
+    word-break: break-word;
+  }
+
+  &__meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    color: var(--color-text-secondary);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  &__requests {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+}
+
+.request-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background-color: var(--color-gray-light);
+  border-radius: var(--radius-md);
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+}

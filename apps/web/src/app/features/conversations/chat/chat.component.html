@@ -1,0 +1,22 @@
+<div class="page chat-page">
+  <div class="container">
+    <h1 class="page-title">Chat</h1>
+
+    <div class="messages">
+      @for (message of messages; track message.id) {
+        <div class="message" [class.message--own]="message.senderId === currentUserId">
+          <app-avatar [name]="message.sender.name" [size]="32"></app-avatar>
+          <div class="message__bubble">
+            <p>{{ message.content }}</p>
+            <span class="message__time">{{ message.createdAt | date:'HH:mm' }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="chat-form">
+      <app-input formControlName="content" placeholder="Escribí un mensaje..." id="content"></app-input>
+      <app-button type="submit" variant="primary" [loading]="sending">Enviar</app-button>
+    </form>
+  </div>
+</div>

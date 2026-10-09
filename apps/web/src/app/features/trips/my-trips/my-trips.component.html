@@ -1,0 +1,106 @@
+<div class="page">
+  <div class="container">
+    <h1 class="page-title">Mis viajes</h1>
+
+    <div class="tabs">
+      <button
+        class="tabs__tab"
+        [class.active]="activeTab === 'passenger'"
+        (click)="activeTab = 'passenger'"
+      >
+        Como pasajero
+      </button>
+      <button
+        class="tabs__tab"
+        [class.active]="activeTab === 'driver'"
+        (click)="activeTab = 'driver'"
+      >
+        Como conductor
+      </button>
+    </div>
+
+    @if (activeTab === 'passenger') {
+      @if (myRequests.length === 0) {
+        <app-empty-state icon="🎒" title="No tenés solicitudes" description="Buscá un viaje y solicitá tu lugar.">
+          <app-button variant="primary" routerLink="/buscar">Buscar viaje</app-button>
+        </app-empty-state>
+      } @else {
+        <div class="trips-list">
+          @for (request of myRequests; track request.id) {
+            <app-card>
+              <div class="request-card">
+                <div class="request-card__route">
+                  {{ request.trip?.origin }} → {{ request.trip?.destination }}
+                </div>
+                <div class="request-card__meta">
+                  <span>{{ request.trip?.departureDate | date:'dd/MM/yyyy' }}</span>
+                  <app-badge [variant]="getStatusVariant(request.status)">{{ getStatusLabel(request.status) }}</app-badge>
+                </div>
+                <div class="request-card__actions">
+                  <app-button variant="outline" size="sm" [routerLink]="['/viajes', request.tripId]">Ver viaje</app-button>
+                  @if (request.status === 'pending' || request.status === 'accepted') {
+                    <app-button variant="ghost" size="sm" (clicked)="cancelRequest(request.id)">Cancelar</app-button>
+                  }
+                  @if (canRate(request.trip!, request)) {
+                    <app-button variant="secondary" size="sm" (clicked)="openRating(request.trip!, request)">Calificar</app-button>
+                  }
+                </div>
+              </div>
+            </app-card>
+          }
+        </div>
+      }
+    } @else {
+      @if (myTrips.length === 0) {
+        <app-empty-state icon="🚗" title="No publicaste viajes" description="Publicá tu primer viaje y encontrá pasajeros.">
+          <app-button variant="primary" routerLink="/publicar">Publicar viaje</app-button>
+        </app-empty-state>
+      } @else {
+        <div class="trips-list">
+          @for (trip of myTrips; track trip.id) {
+            <app-card>
+              <div class="request-card">
+                <div class="request-card__route">
+                  {{ trip.origin }} → {{ trip.destination }}
+                </div>
+                <div class="request-card__meta">
+                  <span>{{ trip.departureDate | date:'dd/MM/yyyy' }} · {{ trip.departureTime.slice(0,5) }} hs</span>
+                  <app-badge [variant]="getStatusVariant(trip.status)">{{ getStatusLabel(trip.status) }}</app-badge>
+                </div>
+                <div class="request-card__requests">
+                  @for (request of trip.requests; track request.id) {
+                    <div class="request-item">
+                      <span>{{ request.passenger?.name }} {{ request.passenger?.lastName }} · {{ request.seats }} lugar/es</span>
+                      <app-badge [variant]="getStatusVariant(request.status)">{{ getStatusLabel(request.status) }}</app-badge>
+                      @if (request.status === 'pending') {
+                        <div class="request-item__actions">
+                          <app-button variant="primary" size="sm" (clicked)="updateRequest(request.id, 'accepted')">Aceptar</app-button>
+                          <app-button variant="ghost" size="sm" (clicked)="updateRequest(request.id, 'rejected')">Rechazar</app-button>
+                        </div>
+                      }
+                      @if (canRate(trip, request)) {
+                        <app-button variant="secondary" size="sm" (clicked)="openRating(trip, request)">Calificar</app-button>
+                      }
+                    </div>
+                  }
+                </div>
+                <app-button variant="outline" size="sm" [routerLink]="['/viajes', trip.id]">Ver viaje</app-button>
+              </div>
+            </app-card>
+          }
+        </div>
+      }
+    }
+
+    @if (showRatingModal) {
+      <app-rating-modal
+        [userName]="ratingUserName"
+        [tripOrigin]="ratingTripOrigin"
+        [tripDestination]="ratingTripDestination"
+        [loading]="ratingLoading"
+        (close)="closeRating()"
+        (submit)="submitRating($event)"
+      ></app-rating-modal>
+    }
+  </div>
+</div>

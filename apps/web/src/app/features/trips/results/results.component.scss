@@ -1,0 +1,89 @@
+.loading-state {
+  text-align: center;
+  padding: 48px;
+  color: var(--color-text-secondary);
+}
+
+.results-grid {
+  display: grid;
+  gap: 16px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.trip-card {
+  &__route {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-violet);
+    margin-bottom: 4px;
+    word-break: break-word;
+    min-width: 0;
+  }
+
+  &__arrow {
+    color: var(--color-orange);
+    flex-shrink: 0;
+  }
+
+  &__meta {
+    display: flex;
+    gap: 12px;
+    font-size: 0.9375rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+  }
+
+  &__driver {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  &__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-orange) 0%, var(--color-magenta) 100%);
+    color: var(--color-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+
+  &__name {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  &__vehicle {
+    font-size: 0.9375rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 12px;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  &__seats {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+  }
+
+  &__price {
+    font-weight: 700;
+    color: var(--color-orange);
+  }
+}

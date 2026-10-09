@@ -1,0 +1,27 @@
+{
+  "name": "de-ruta",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DE RUTA - Encontrá con quién viajar.",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run start --workspace=apps/web",
+    "dev:api": "npm run start:dev --workspace=apps/api",
+    "build": "npm run build:api && npm run build:web",
+    "build:web": "npm run build --workspace=apps/web",
+    "build:api": "npm run build --workspace=apps/api",
+    "test": "npm run test:api && npm run test:web",
+    "test:web": "npm run test --workspace=apps/web",
+    "test:api": "npm run test --workspace=apps/api",
+    "lint:web": "npm run lint --workspace=apps/web",
+    "lint:api": "npm run lint --workspace=apps/api",
+    "infra:up": "docker-compose up -d",
+    "infra:down": "docker-compose down"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}

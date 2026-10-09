@@ -1,0 +1,53 @@
+<div class="page">
+  <div class="container">
+    <h1 class="page-title">Resultados</h1>
+    <p class="page-subtitle">{{ origin }} → {{ destination }} · {{ departureDate | date:'dd/MM/yyyy' }}</p>
+
+    @if (loading) {
+      <div class="loading-state">Buscando viajes...</div>
+    } @else if (trips.length === 0) {
+      <app-empty-state
+        icon="🛣️"
+        title="No encontramos viajes para esta fecha"
+        description="Podemos avisarte cuando aparezca un viaje compatible."
+      >
+        <app-button variant="primary" (clicked)="createAlert()">Avisarme cuando aparezca uno</app-button>
+      </app-empty-state>
+    } @else {
+      <div class="results-grid">
+        @for (trip of trips; track trip.id) {
+          <app-card>
+            <div class="trip-card">
+              <div class="trip-card__route">
+                <span>{{ trip.origin }}</span>
+                <span class="trip-card__arrow">→</span>
+                <span>{{ trip.destination }}</span>
+              </div>
+              <div class="trip-card__meta">
+                <span>{{ trip.departureDate | date:'dd/MM/yyyy' }}</span>
+                <span>{{ trip.departureTime.slice(0,5) }} hs</span>
+              </div>
+              <div class="trip-card__driver">
+                <div class="trip-card__avatar">{{ trip.driver.name[0] }}</div>
+                <div>
+                  <div class="trip-card__name">{{ trip.driver.name }} {{ trip.driver.lastName }}</div>
+                  <app-rating [value]="trip.driver.rating"></app-rating>
+                </div>
+              </div>
+              <div class="trip-card__vehicle" *ngIf="trip.vehicle">
+                🚗 {{ trip.vehicle.brand }} {{ trip.vehicle.model }}
+              </div>
+              <div class="trip-card__footer">
+                <span class="trip-card__seats">{{ trip.availableSeats }} lugares disponibles</span>
+                <span class="trip-card__price">${{ formatPrice(trip.contributionPerPassenger) }} por pasajero</span>
+              </div>
+              <app-button variant="primary" [fullWidth]="true" [routerLink]="['/viajes', trip.id]">
+                Ver viaje
+              </app-button>
+            </div>
+          </app-card>
+        }
+      </div>
+    }
+  </div>
+</div>

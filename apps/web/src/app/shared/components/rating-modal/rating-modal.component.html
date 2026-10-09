@@ -1,0 +1,30 @@
+<div class="modal-backdrop" (click)="close.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h3>Calificar a {{ userName }}</h3>
+    <p>Viaje: {{ tripOrigin }} → {{ tripDestination }}</p>
+
+    <div class="stars">
+      @for (star of stars; track star) {
+        <button
+          type="button"
+          class="star-btn"
+          [class.filled]="star <= score"
+          (click)="score = star"
+        >
+          ★
+        </button>
+      }
+    </div>
+
+    <textarea
+      [(ngModel)]="comment"
+      placeholder="Comentario opcional"
+      rows="3"
+    ></textarea>
+
+    <div class="modal__actions">
+      <app-button variant="ghost" (clicked)="close.emit()">Cancelar</app-button>
+      <app-button variant="primary" [loading]="loading" (clicked)="submit.emit({ score, comment })">Calificar</app-button>
+    </div>
+  </div>
+</div>

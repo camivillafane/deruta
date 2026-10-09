@@ -1,0 +1,74 @@
+.trip-detail {
+  &__route {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-violet);
+    margin-bottom: 12px;
+    word-break: break-word;
+    min-width: 0;
+  }
+
+  &__arrow {
+    color: var(--color-orange);
+    flex-shrink: 0;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    color: var(--color-text-secondary);
+  }
+
+  &__section {
+    margin-bottom: 20px;
+
+    h3 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--color-violet);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    p {
+      font-size: 1rem;
+      color: var(--color-text);
+    }
+  }
+
+  &__price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-orange);
+  }
+
+  &__driver {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 20px;
+    background-color: var(--color-gray-light);
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+
+    h3 {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 4px;
+    }
+
+    p {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+    }
+  }
+}

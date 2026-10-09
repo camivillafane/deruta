@@ -1,0 +1,76 @@
+<div class="page">
+  <div class="container">
+    <h1 class="page-title">Mi perfil</h1>
+
+    @if (user) {
+      <div class="profile-section">
+        <app-card>
+          <div class="profile-header">
+            <app-avatar [name]="user.name" [size]="80"></app-avatar>
+            <div class="profile-header__info">
+              <h2>{{ user.name }} {{ user.lastName }}</h2>
+              <app-rating [value]="user.rating"></app-rating>
+              <p>{{ user.totalTrips }} viajes · Miembro desde {{ user.createdAt | date:'MM/yyyy' }}</p>
+            </div>
+          </div>
+        </app-card>
+      </div>
+
+      <div class="profile-section">
+        <app-card>
+          <h3 class="section-title">Editar perfil</h3>
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="profile-form">
+            <div class="form-row">
+              <app-input formControlName="name" label="Nombre" id="name"></app-input>
+              <app-input formControlName="lastName" label="Apellido" id="lastName"></app-input>
+            </div>
+            <div class="form-row">
+              <app-input formControlName="phone" label="Teléfono" id="phone"></app-input>
+              <app-input formControlName="city" label="Ciudad" id="city"></app-input>
+            </div>
+            <app-button type="submit" variant="primary" [loading]="saving">Guardar cambios</app-button>
+          </form>
+        </app-card>
+      </div>
+
+      <div class="profile-section">
+        <app-card>
+          <div class="profile-section__header">
+            <h3 class="section-title">Mis vehículos</h3>
+            <app-button variant="outline" size="sm" (clicked)="showVehicleForm = !showVehicleForm">
+              {{ showVehicleForm ? 'Cancelar' : 'Agregar vehículo' }}
+            </app-button>
+          </div>
+
+          @if (showVehicleForm) {
+            <form [formGroup]="vehicleForm" (ngSubmit)="onVehicleSubmit()" class="profile-form">
+              <div class="form-row">
+                <app-input formControlName="brand" label="Marca" id="brand"></app-input>
+                <app-input formControlName="model" label="Modelo" id="model"></app-input>
+              </div>
+              <div class="form-row">
+                <app-input formControlName="year" label="Año" type="number" id="year"></app-input>
+                <app-input formControlName="color" label="Color" id="color"></app-input>
+              </div>
+              <app-input formControlName="plate" label="Patente" id="plate"></app-input>
+              <app-button type="submit" variant="primary" [loading]="savingVehicle">Guardar vehículo</app-button>
+            </form>
+          }
+
+          <div class="vehicles-list">
+            @for (vehicle of vehicles; track vehicle.id) {
+              <div class="vehicle-item">
+                🚗 {{ vehicle.brand }} {{ vehicle.model }}
+                @if (vehicle.year) { ({{ vehicle.year }}) }
+                · {{ vehicle.color }}
+                @if (vehicle.plate) { · {{ vehicle.plate }}}
+              </div>
+            }
+          </div>
+        </app-card>
+      </div>
+
+      <app-button variant="ghost" [fullWidth]="true" (clicked)="auth.logout()">Cerrar sesión</app-button>
+    }
+  </div>
+</div>

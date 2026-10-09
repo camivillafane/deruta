@@ -1,0 +1,25 @@
+.conversations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &__info {
+    flex: 1;
+  }
+
+  &__route {
+    font-weight: 700;
+    color: var(--color-violet);
+  }
+
+  &__meta {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+  }
+}

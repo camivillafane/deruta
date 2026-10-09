@@ -68,17 +68,19 @@
     @media (min-width: 768px) {
       justify-content: flex-end;
     }
+
+    app-card {
+      width: 100%;
+
+      .app-card {
+        padding: 32px;
+      }
+    }
   }
 }
 
 .hero-search-form {
   width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
-
-  @media (min-width: 768px) {
-    margin: 0 0 0 auto;
-  }
 
   &__title {
     font-size: 1.5rem;
@@ -87,9 +89,18 @@
     margin-bottom: 20px;
   }
 
+  &__row {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 14px;
+
+    @media (min-width: 768px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
   app-input {
     display: block;
-    margin-bottom: 14px;
   }
 
   app-button {

@@ -26,35 +26,39 @@ import { CardComponent } from '../../shared/components/card/card.component';
           <app-card>
             <form [formGroup]="form" (ngSubmit)="onSubmit()" class="hero-search-form">
               <h3 class="hero-search-form__title">¿A dónde vas?</h3>
-              <app-input
-                formControlName="origin"
-                label="Origen"
-                placeholder="¿Desde dónde salís?"
-                id="origin"
-                [error]="getError('origin')"
-              />
-              <app-input
-                formControlName="destination"
-                label="Destino"
-                placeholder="¿A dónde vas?"
-                id="destination"
-                [error]="getError('destination')"
-              />
-              <app-input
-                formControlName="departureDate"
-                label="Fecha"
-                type="date"
-                id="departureDate"
-                [error]="getError('departureDate')"
-              />
-              <app-input
-                formControlName="passengers"
-                label="Pasajeros"
-                type="number"
-                min="1"
-                id="passengers"
-                [error]="getError('passengers')"
-              />
+              <div class="hero-search-form__row">
+                <app-input
+                  formControlName="origin"
+                  label="Origen"
+                  placeholder="¿Desde dónde salís?"
+                  id="origin"
+                  [error]="getError('origin')"
+                />
+                <app-input
+                  formControlName="destination"
+                  label="Destino"
+                  placeholder="¿A dónde vas?"
+                  id="destination"
+                  [error]="getError('destination')"
+                />
+              </div>
+              <div class="hero-search-form__row">
+                <app-input
+                  formControlName="departureDate"
+                  label="Fecha"
+                  type="date"
+                  id="departureDate"
+                  [error]="getError('departureDate')"
+                />
+                <app-input
+                  formControlName="passengers"
+                  label="Pasajeros"
+                  type="number"
+                  min="1"
+                  id="passengers"
+                  [error]="getError('passengers')"
+                />
+              </div>
               <app-button
                 type="submit"
                 variant="primary"

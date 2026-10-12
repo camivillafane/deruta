@@ -8,6 +8,7 @@ import { Trip } from '../entities/index.js';
 import { TripRequest, TripRequestStatus } from '../entities/index.js';
 import { SendMessageDto } from '../messages/dto/message.dto.js';
 import { CreateConversationDto } from './dto/conversation.dto.js';
+import { NotificationDispatcherService } from '../common/services/notification-dispatcher.service.js';
 
 @Injectable()
 export class ConversationsService {
@@ -20,6 +21,7 @@ export class ConversationsService {
     private readonly tripRepository: Repository<Trip>,
     @InjectRepository(TripRequest)
     private readonly requestRepository: Repository<TripRequest>,
+    private readonly notificationDispatcher: NotificationDispatcherService,
   ) {}
 
   async create(userId: string, dto: CreateConversationDto): Promise<Conversation> {
@@ -81,7 +83,40 @@ export class ConversationsService {
       senderId,
       content: dto.content,
     });
-    return this.messageRepository.save(message);
+    const saved = await this.messageRepository.save(message);
+
+    const trip = conversation.trip;
+    const isDriver = trip.driverId === senderId;
+    if (isDriver) {
+      const acceptedRequests = await this.requestRepository.find({
+        where: { tripId: trip.id, status: TripRequestStatus.ACCEPTED },
+      });
+      for (const request of acceptedRequests) {
+        await this.notificationDispatcher.notify({
+          userId: request.passengerId,
+          title: 'Nuevo mensaje',
+          message: `Recibiste un mensaje sobre el viaje ${trip.origin} → ${trip.destination}`,
+          link: `/mensajes/${conversation.id}`,
+          email: {
+            subject: 'Nuevo mensaje - DE RUTA',
+            text: `Recibiste un mensaje sobre el viaje ${trip.origin} → ${trip.destination}. Ingresá para leerlo.`,
+          },
+        });
+      }
+    } else {
+      await this.notificationDispatcher.notify({
+        userId: trip.driverId,
+        title: 'Nuevo mensaje',
+        message: `Recibiste un mensaje sobre el viaje ${trip.origin} → ${trip.destination}`,
+        link: `/mensajes/${conversation.id}`,
+        email: {
+          subject: 'Nuevo mensaje - DE RUTA',
+          text: `Recibiste un mensaje sobre el viaje ${trip.origin} → ${trip.destination}. Ingresá para leerlo.`,
+        },
+      });
+    }
+
+    return saved;
   }
 
   async findMessages(conversationId: string, userId: string): Promise<Message[]> {

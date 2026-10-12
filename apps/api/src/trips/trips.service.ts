@@ -2,9 +2,10 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { toPublicUser } from '../common/utils/user.mapper.js';
-import { Trip, TripRequest, TripStatus, User } from '../entities/index.js';
+import { Trip, TripRequest, TripStatus, User, TripSearch } from '../entities/index.js';
 import { Vehicle } from '../entities/index.js';
 import { CreateTripDto, SearchTripsDto, UpdateTripDto } from './dto/trip.dto.js';
+import { NotificationDispatcherService } from '../common/services/notification-dispatcher.service.js';
 
 @Injectable()
 export class TripsService {
@@ -17,6 +18,9 @@ export class TripsService {
     private readonly requestRepository: Repository<TripRequest>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(TripSearch)
+    private readonly searchRepository: Repository<TripSearch>,
+    private readonly notificationDispatcher: NotificationDispatcherService,
   ) {}
 
   async create(driverId: string, dto: CreateTripDto): Promise<Trip> {
@@ -106,12 +110,32 @@ export class TripsService {
   }
 
   async remove(id: string, driverId: string): Promise<void> {
-    const trip = await this.findOne(id);
+    const trip = await this.tripRepository.findOne({
+      where: { id },
+      relations: { requests: { passenger: true } },
+    });
+    if (!trip) {
+      throw new NotFoundException('Viaje no encontrado');
+    }
     if (trip.driverId !== driverId) {
       throw new ForbiddenException('No podés eliminar este viaje');
     }
     trip.status = TripStatus.CANCELLED;
     await this.tripRepository.save(trip);
+
+    const acceptedRequests = trip.requests?.filter((request) => request.status === 'accepted') ?? [];
+    for (const request of acceptedRequests) {
+      await this.notificationDispatcher.notify({
+        userId: request.passengerId,
+        title: 'Viaje cancelado',
+        message: `El viaje ${trip.origin} → ${trip.destination} fue cancelado por el conductor`,
+        link: '/mis-viajes',
+        email: {
+          subject: 'Viaje cancelado - DE RUTA',
+          text: `El viaje ${trip.origin} → ${trip.destination} fue cancelado por el conductor. Buscá otra opción en la app.`,
+        },
+      });
+    }
   }
 
   async findByDriver(driverId: string): Promise<Trip[]> {
@@ -142,7 +166,13 @@ export class TripsService {
   }
 
   async complete(id: string, driverId: string): Promise<Trip> {
-    const trip = await this.findOne(id);
+    const trip = await this.tripRepository.findOne({
+      where: { id },
+      relations: { requests: { passenger: true } },
+    });
+    if (!trip) {
+      throw new NotFoundException('Viaje no encontrado');
+    }
     if (trip.driverId !== driverId) {
       throw new ForbiddenException('No podés completar este viaje');
     }
@@ -150,10 +180,45 @@ export class TripsService {
       throw new BadRequestException('Solo se pueden completar viajes activos');
     }
     trip.status = TripStatus.COMPLETED;
-    return this.tripRepository.save(trip);
+    const saved = await this.tripRepository.save(trip);
+
+    const acceptedRequests = trip.requests?.filter((request) => request.status === 'accepted') ?? [];
+    for (const request of acceptedRequests) {
+      await this.notificationDispatcher.notify({
+        userId: request.passengerId,
+        title: 'Viaje completado',
+        message: `El viaje ${trip.origin} → ${trip.destination} fue completado. Dejá tu calificación.`,
+        link: '/mis-viajes',
+        email: {
+          subject: 'Viaje completado - DE RUTA',
+          text: `El viaje ${trip.origin} → ${trip.destination} fue completado. Ingresá para calificar a tu compañero de viaje.`,
+        },
+      });
+    }
+
+    return saved;
   }
 
-  private async notifyMatchingAlerts(_trip: Trip): Promise<void> {
-    // Se implementará en el módulo de alertas/notificaciones
+  private async notifyMatchingAlerts(trip: Trip): Promise<void> {
+    const searches = await this.searchRepository.find({
+      where: {
+        origin: trip.origin,
+        destination: trip.destination,
+        date: trip.departureDate,
+      },
+    });
+
+    for (const search of searches) {
+      await this.notificationDispatcher.notify({
+        userId: search.userId,
+        title: 'Apareció un viaje para tu búsqueda',
+        message: `Hay un viaje de ${trip.origin} → ${trip.destination} el ${trip.departureDate.toISOString().split('T')[0]}`,
+        link: `/viajes/${trip.id}`,
+        email: {
+          subject: 'Apareció un viaje - DE RUTA',
+          text: `Hay un viaje de ${trip.origin} → ${trip.destination} el ${trip.departureDate.toISOString().split('T')[0]}. Ingresá para ver los detalles.`,
+        },
+      });
+    }
   }
 }

@@ -5,6 +5,7 @@ import { Trip, TripStatus } from '../entities/index.js';
 import { TripRequest, TripRequestStatus } from '../entities/index.js';
 import { Conversation } from '../entities/index.js';
 import { CreateTripRequestDto, UpdateTripRequestStatusDto } from './dto/trip-request.dto.js';
+import { NotificationDispatcherService } from '../common/services/notification-dispatcher.service.js';
 
 @Injectable()
 export class TripRequestsService {
@@ -16,6 +17,7 @@ export class TripRequestsService {
     @InjectRepository(Conversation)
     private readonly conversationRepository: Repository<Conversation>,
     private readonly dataSource: DataSource,
+    private readonly notificationDispatcher: NotificationDispatcherService,
   ) {}
 
   async create(passengerId: string, dto: CreateTripRequestDto): Promise<TripRequest> {
@@ -55,7 +57,20 @@ export class TripRequestsService {
         status: TripRequestStatus.PENDING,
       });
 
-      return manager.save(request);
+      const saved = await manager.save(request);
+
+      await this.notificationDispatcher.notify({
+        userId: trip.driverId,
+        title: 'Nueva solicitud de viaje',
+        message: `Recibiste una solicitud para tu viaje ${trip.origin} → ${trip.destination}`,
+        link: `/mis-viajes`,
+        email: {
+          subject: 'Nueva solicitud de viaje - DE RUTA',
+          text: `Recibiste una solicitud para tu viaje ${trip.origin} → ${trip.destination}. Ingresá para aceptarla o rechazarla.`,
+        },
+      });
+
+      return saved;
     });
   }
 
@@ -123,7 +138,25 @@ export class TripRequestsService {
       }
 
       request.status = dto.status;
-      return manager.save(request);
+      const saved = await manager.save(request);
+
+      const isAccepted = dto.status === TripRequestStatus.ACCEPTED;
+      await this.notificationDispatcher.notify({
+        userId: request.passengerId,
+        title: isAccepted ? 'Solicitud aceptada' : 'Solicitud rechazada',
+        message: isAccepted
+          ? `Tu solicitud para ${request.trip.origin} → ${request.trip.destination} fue aceptada`
+          : `Tu solicitud para ${request.trip.origin} → ${request.trip.destination} fue rechazada`,
+        link: '/mis-viajes',
+        email: {
+          subject: isAccepted ? 'Solicitud aceptada - DE RUTA' : 'Solicitud rechazada - DE RUTA',
+          text: isAccepted
+            ? `Tu solicitud para el viaje ${request.trip.origin} → ${request.trip.destination} fue aceptada. Ya podés coordinar con el conductor.`
+            : `Tu solicitud para el viaje ${request.trip.origin} → ${request.trip.destination} fue rechazada.`,
+        },
+      });
+
+      return saved;
     });
   }
 
@@ -144,7 +177,20 @@ export class TripRequestsService {
         await manager.save(request.trip);
       }
       request.status = TripRequestStatus.CANCELLED;
-      return manager.save(request);
+      const saved = await manager.save(request);
+
+      await this.notificationDispatcher.notify({
+        userId: request.trip.driverId,
+        title: 'Solicitud cancelada',
+        message: `Un pasajero canceló su solicitud para ${request.trip.origin} → ${request.trip.destination}`,
+        link: '/mis-viajes',
+        email: {
+          subject: 'Solicitud cancelada - DE RUTA',
+          text: `Un pasajero canceló su solicitud para el viaje ${request.trip.origin} → ${request.trip.destination}.`,
+        },
+      });
+
+      return saved;
     });
   }
 

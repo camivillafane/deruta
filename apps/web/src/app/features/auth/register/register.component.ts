@@ -119,13 +119,7 @@ export class RegisterComponent {
     this.errorMessage = '';
 
     this.authService.register(this.form.value).subscribe({
-      next: (response) => {
-        if (response.emailVerificationCode) {
-          console.log('[DEV] Email verification code:', response.emailVerificationCode);
-        }
-        if (response.phoneVerificationCode) {
-          console.log('[DEV] Phone verification code:', response.phoneVerificationCode);
-        }
+      next: () => {
         this.router.navigate(['/verificacion']);
       },
       error: (err) => {

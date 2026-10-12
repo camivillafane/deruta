@@ -8,7 +8,9 @@ import { compare, hash } from 'bcryptjs';
 import { randomInt } from 'crypto';
 import { UsersService } from '../users/users.service.js';
 import { LoginDto, RegisterDto } from './dto/auth.dto.js';
-import { VerifyCodeDto, VerifyIdentityDto, ResendCodeDto } from './dto/verification.dto.js';
+import { VerifyCodeDto, VerifyIdentityDto } from './dto/verification.dto.js';
+import { EmailServiceFactory } from '../common/services/email.service.js';
+import { SmsServiceFactory } from '../common/services/sms.service.js';
 
 export interface TokenPayload {
   sub: string;
@@ -32,9 +34,11 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly emailServiceFactory: EmailServiceFactory,
+    private readonly smsServiceFactory: SmsServiceFactory,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthResponse & { emailVerificationCode?: string; phoneVerificationCode?: string }> {
+  async register(dto: RegisterDto): Promise<AuthResponse> {
     const passwordHash = await hash(dto.password, 12);
     const user = await this.usersService.create({
       name: dto.name,
@@ -49,11 +53,7 @@ export class AuthService {
 
     await this.sendVerificationCodes(user.email, user.phone, codes);
 
-    return {
-      ...this.generateTokens(user),
-      emailVerificationCode: this.isDev() ? codes.emailVerificationCode : undefined,
-      phoneVerificationCode: this.isDev() ? codes.phoneVerificationCode : undefined,
-    };
+    return this.generateTokens(user);
   }
 
   async login(dto: LoginDto): Promise<AuthResponse> {
@@ -136,10 +136,10 @@ export class AuthService {
     await this.usersService.verifyEmail(userId);
   }
 
-  async resendEmailVerification(userId: string): Promise<{ emailVerificationCode?: string }> {
+  async resendEmailVerification(userId: string): Promise<void> {
     const user = await this.usersService.findById(userId);
     if (user.emailVerified) {
-      return {};
+      return;
     }
     const code = this.generateCode();
     const expiresAt = this.expiresAt();
@@ -151,7 +151,6 @@ export class AuthService {
       emailVerificationCode: code,
       emailVerificationExpiresAt: expiresAt,
     });
-    return { emailVerificationCode: this.isDev() ? code : undefined };
   }
 
   async verifyPhone(userId: string, dto: VerifyCodeDto): Promise<void> {
@@ -168,10 +167,10 @@ export class AuthService {
     await this.usersService.verifyPhone(userId);
   }
 
-  async resendPhoneVerification(userId: string): Promise<{ phoneVerificationCode?: string }> {
+  async resendPhoneVerification(userId: string): Promise<void> {
     const user = await this.usersService.findById(userId);
     if (user.phoneVerified || !user.phone) {
-      return {};
+      return;
     }
     const code = this.generateCode();
     const expiresAt = this.expiresAt();
@@ -183,12 +182,12 @@ export class AuthService {
       phoneVerificationCode: code,
       phoneVerificationExpiresAt: expiresAt,
     });
-    return { phoneVerificationCode: this.isDev() ? code : undefined };
   }
 
   async submitIdentity(userId: string, dto: VerifyIdentityDto): Promise<void> {
     await this.usersService.submitIdentity(userId, dto);
-    if (this.isDev()) {
+    const storageProvider = this.configService.get<string>('STORAGE_PROVIDER', 'local');
+    if (storageProvider === 'local') {
       await this.usersService.approveIdentity(userId);
     }
   }
@@ -216,14 +215,23 @@ export class AuthService {
     phone?: string,
     codes?: Partial<ReturnType<typeof this.generateVerificationCodes>>,
   ): Promise<void> {
-    if (this.isDev()) {
-      console.log('[DEV] Verification codes:', { email, phone, ...codes });
-      return;
-    }
-    // TODO: integrar SendGrid/Resend para email y Twilio para SMS
-  }
+    const emailService = this.emailServiceFactory.create();
+    const smsService = this.smsServiceFactory.create();
 
-  private isDev(): boolean {
-    return this.configService.get<string>('NODE_ENV', 'development') !== 'production';
+    if (email && codes?.emailVerificationCode) {
+      await emailService.send({
+        to: email,
+        subject: 'Tu código de verificación - DE RUTA',
+        text: `Tu código para verificar tu email es: ${codes.emailVerificationCode}. Vence en ${this.configService.get('VERIFICATION_CODE_EXPIRATION_MINUTES', '30')} minutos.`,
+        html: `<p>Tu código para verificar tu email es: <strong>${codes.emailVerificationCode}</strong></p><p>Vence en ${this.configService.get('VERIFICATION_CODE_EXPIRATION_MINUTES', '30')} minutos.</p>`,
+      });
+    }
+
+    if (phone && codes?.phoneVerificationCode) {
+      await smsService.send({
+        to: phone,
+        body: `Tu código de verificación de DE RUTA es: ${codes.phoneVerificationCode}. Vence en ${this.configService.get('VERIFICATION_CODE_EXPIRATION_MINUTES', '30')} minutos.`,
+      });
+    }
   }
 }

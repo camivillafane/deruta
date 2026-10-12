@@ -1,23 +1,77 @@
-version: "3.9"
+version: '3.8'
 
 services:
-  postgres:
+  db:
     image: postgres:16-alpine
-    container_name: deruta-postgres
+    container_name: deruta-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-deruta}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-deruta}
       POSTGRES_DB: ${DB_NAME:-deruta}
-    ports:
-      - "${DB_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-deruta} -d ${DB_NAME:-deruta}"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: deruta-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      API_PORT: 3000
+      API_PREFIX: /api/v1
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-15m}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
+      VERIFICATION_CODE_EXPIRATION_MINUTES: ${VERIFICATION_CODE_EXPIRATION_MINUTES:-30}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-deruta}
+      DB_PASSWORD: ${DB_PASSWORD:-deruta}
+      DB_NAME: ${DB_NAME:-deruta}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@deruta.app}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      SMS_PROVIDER: ${SMS_PROVIDER:-console}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
+      LOCAL_STORAGE_URL: ${LOCAL_STORAGE_URL:-http://localhost:3000/uploads}
+    ports:
+      - "3000:3000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: deruta-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
 
 volumes:
   postgres_data:

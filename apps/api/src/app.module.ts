@@ -18,6 +18,7 @@ import { AlertsModule } from './alerts/alerts.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { SeedModule } from './seeds/seed.module.js';
+import { ThrottlerModule } from '@nestjs/throttler';
 import {
   Alert,
   Conversation,
@@ -38,6 +39,10 @@ import {
       envFilePath: ['../../.env', '.env'],
       load: [databaseConfig],
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
     TypeOrmModule.forRootAsync({
       useFactory: () => {
         const isProduction = process.env.NODE_ENV === 'production';

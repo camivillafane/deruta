@@ -68,6 +68,11 @@ export const routes: Routes = [
     canActivate: [authGuard, adminGuard],
   },
   {
+    path: 'admin/reportes',
+    loadComponent: () => import('./features/admin/admin-reports.component').then((m) => m.AdminReportsComponent),
+    canActivate: [authGuard, adminGuard],
+  },
+  {
     path: '**',
     loadComponent: () => import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
   },

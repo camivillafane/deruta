@@ -85,6 +85,15 @@ export class User {
   @Column({ nullable: true, type: 'varchar', select: false })
   refreshTokenHash?: string;
 
+  @Column({ default: false })
+  isBlocked: boolean;
+
+  @Column({ nullable: true, type: 'text' })
+  blockedReason?: string;
+
+  @Column({ nullable: true, type: 'datetime' })
+  blockedAt?: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -424,4 +433,46 @@ export class Notification {
 
   @CreateDateColumn()
   createdAt: Date;
+}
+
+export enum UserReportStatus {
+  PENDING = 'pending',
+  RESOLVED = 'resolved',
+  DISMISSED = 'dismissed',
+}
+
+@Entity('user_reports')
+export class UserReport {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  reporter: User;
+
+  @Column()
+  reporterId: string;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  reportedUser: User;
+
+  @Column()
+  reportedUserId: string;
+
+  @Column({ type: 'text' })
+  reason: string;
+
+  @Column({ nullable: true, type: 'text' })
+  description?: string;
+
+  @Column({ type: 'varchar', length: 20, default: UserReportStatus.PENDING })
+  status: UserReportStatus;
+
+  @Column({ nullable: true, type: 'text' })
+  adminNotes?: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

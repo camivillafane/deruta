@@ -1,7 +1,12 @@
 <div class="page">
   <div class="container">
-    <h1 class="page-title">Verificaciones pendientes</h1>
-    <p class="page-subtitle">Revisá la documentación de los usuarios que quieren publicar viajes.</p>
+    <div class="admin-header">
+      <div>
+        <h1 class="page-title">Verificaciones pendientes</h1>
+        <p class="page-subtitle">Revisá la documentación de los usuarios que quieren publicar viajes.</p>
+      </div>
+      <a routerLink="/admin/reportes" class="admin-link">Ver reportes</a>
+    </div>
 
     @if (loading) {
       <p>Cargando...</p>

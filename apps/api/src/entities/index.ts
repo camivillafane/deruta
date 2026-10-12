@@ -11,4 +11,6 @@ export {
   Message,
   Alert,
   Notification,
+  UserReport,
+  UserReportStatus,
 } from './entities.js';

@@ -71,4 +71,24 @@
       color: var(--color-text-secondary);
     }
   }
+
+  &__report {
+    margin-top: 16px;
+    padding: 20px;
+    background-color: var(--color-gray-light);
+    border-radius: var(--radius-lg);
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-violet);
+      margin-bottom: 12px;
+    }
+  }
+
+  &__report-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
 }

@@ -17,6 +17,7 @@ import { MessagesModule } from './messages/messages.module.js';
 import { AlertsModule } from './alerts/alerts.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { AdminModule } from './admin/admin.module.js';
+import { ReportsModule } from './reports/reports.module.js';
 import { SeedModule } from './seeds/seed.module.js';
 import { ThrottlerModule } from '@nestjs/throttler';
 import {
@@ -29,6 +30,7 @@ import {
   TripRequest,
   TripSearch,
   User,
+  UserReport,
   Vehicle,
 } from './entities/index.js';
 
@@ -54,7 +56,7 @@ import {
             username: process.env.DB_USER || 'deruta',
             password: process.env.DB_PASSWORD || 'deruta',
             database: process.env.DB_NAME || 'deruta',
-            entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification],
+            entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification, UserReport],
             synchronize: false,
             logging: false,
           } as DataSourceOptions;
@@ -62,7 +64,7 @@ import {
         return {
           type: 'better-sqlite3',
           database: 'deruta-dev.sqlite',
-          entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification],
+          entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification, UserReport],
           synchronize: true,
           logging: false,
         } as unknown as DataSourceOptions;
@@ -80,6 +82,7 @@ import {
     AlertsModule,
     NotificationsModule,
     AdminModule,
+    ReportsModule,
     SeedModule,
   ],
   controllers: [AppController],

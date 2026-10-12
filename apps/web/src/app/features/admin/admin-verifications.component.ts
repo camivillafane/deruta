@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
 import { User } from '../../core/models';
 import { CardComponent } from '../../shared/components/card/card.component';
@@ -10,7 +11,7 @@ import { ToastService } from '../../shared/components/toast/toast.service';
 @Component({
   selector: 'app-admin-verifications',
   standalone: true,
-  imports: [CommonModule, CardComponent, ButtonComponent, EmptyStateComponent],
+  imports: [CommonModule, RouterModule, CardComponent, ButtonComponent, EmptyStateComponent],
   templateUrl: './admin-verifications.component.html',
   styleUrl: './admin-verifications.component.scss',
 })

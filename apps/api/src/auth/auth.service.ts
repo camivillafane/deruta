@@ -67,6 +67,10 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
+    if (user.isBlocked) {
+      throw new UnauthorizedException(user.blockedReason || 'Tu cuenta ha sido bloqueada. Contactá al soporte.');
+    }
+
     return this.generateTokens(user);
   }
 

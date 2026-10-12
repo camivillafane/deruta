@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
-import { CreateTripDto, SearchTripsDto, UpdateTripDto } from './dto/trip.dto.js';
+import { CreateTripDto, ListTripsQueryDto, SearchTripsDto, UpdateTripDto } from './dto/trip.dto.js';
 import { TripsService } from './trips.service.js';
 
 @Controller('trips')
@@ -26,12 +26,8 @@ export class TripsController {
   }
 
   @Get()
-  findAll(
-    @Query('origin') origin?: string,
-    @Query('destination') destination?: string,
-    @Query('date') date?: string,
-  ) {
-    return this.tripsService.findAll({ origin, destination, date });
+  findAll(@Query() query: ListTripsQueryDto) {
+    return this.tripsService.findAll(query);
   }
 
   @Get('search')

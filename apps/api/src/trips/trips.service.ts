@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { toPublicUser } from '../common/utils/user.mapper.js';
 import { Trip, TripRequest, TripStatus, User, TripSearch } from '../entities/index.js';
 import { Vehicle } from '../entities/index.js';
-import { CreateTripDto, SearchTripsDto, UpdateTripDto } from './dto/trip.dto.js';
+import { CreateTripDto, ListTripsQueryDto, SearchTripsDto, UpdateTripDto } from './dto/trip.dto.js';
 import { NotificationDispatcherService } from '../common/services/notification-dispatcher.service.js';
 
 @Injectable()
@@ -47,7 +47,9 @@ export class TripsService {
     return saved;
   }
 
-  async search(dto: SearchTripsDto): Promise<Trip[]> {
+  async search(dto: SearchTripsDto): Promise<{ data: Trip[]; total: number; page: number; limit: number }> {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 10;
     const query = this.tripRepository
       .createQueryBuilder('trip')
       .leftJoinAndSelect('trip.driver', 'driver')
@@ -62,11 +64,19 @@ export class TripsService {
       query.andWhere('trip.availableSeats >= :passengers', { passengers: dto.passengers });
     }
 
-    const trips = await query.getMany();
-    return trips.map((trip) => ({ ...trip, driver: toPublicUser(trip.driver) as Trip['driver'] }));
+    const [trips, total] = await query.skip((page - 1) * limit).take(limit).getManyAndCount();
+    return {
+      data: trips.map((trip) => ({ ...trip, driver: toPublicUser(trip.driver) as Trip['driver'] })),
+      total,
+      page,
+      limit,
+    };
   }
 
-  async findAll(filters?: { origin?: string; destination?: string; date?: string }): Promise<Trip[]> {
+  async findAll(filters?: ListTripsQueryDto): Promise<{ data: Trip[]; total: number; page: number; limit: number }> {
+    const page = filters?.page ?? 1;
+    const limit = filters?.limit ?? 10;
+
     const query = this.tripRepository
       .createQueryBuilder('trip')
       .leftJoinAndSelect('trip.driver', 'driver')
@@ -85,8 +95,13 @@ export class TripsService {
       query.andWhere('trip.departureDate = :date', { date: filters.date });
     }
 
-    const trips = await query.getMany();
-    return trips.map((trip) => ({ ...trip, driver: toPublicUser(trip.driver) as Trip['driver'] }));
+    const [trips, total] = await query.skip((page - 1) * limit).take(limit).getManyAndCount();
+    return {
+      data: trips.map((trip) => ({ ...trip, driver: toPublicUser(trip.driver) as Trip['driver'] })),
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: string): Promise<Trip> {

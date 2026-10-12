@@ -7,9 +7,10 @@ import { Vehicle } from '../entities/index.js';
 import { TripRequest } from '../entities/index.js';
 import { User } from '../entities/index.js';
 import { TripSearch } from '../entities/index.js';
+import { CommonModule } from '../common/common.module.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Trip, Vehicle, TripRequest, User, TripSearch])],
+  imports: [TypeOrmModule.forFeature([Trip, Vehicle, TripRequest, User, TripSearch]), CommonModule],
   controllers: [TripsController],
   providers: [TripsService],
   exports: [TripsService],

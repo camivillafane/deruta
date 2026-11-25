@@ -77,6 +77,9 @@ export class ConversationsService {
   }
 
   async sendMessage(senderId: string, dto: SendMessageDto): Promise<Message> {
+    if (!dto.conversationId) {
+      throw new BadRequestException('Falta el identificador de la conversación');
+    }
     const conversation = await this.findOne(dto.conversationId, senderId);
     const message = this.messageRepository.create({
       conversationId: conversation.id,

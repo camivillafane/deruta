@@ -1,0 +1,14 @@
+{$DOMAIN} {
+	encode gzip zstd
+
+	# nginx del contenedor web sirve la SPA y hace de proxy a /api/v1, /socket.io y /uploads
+	reverse_proxy web:80
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

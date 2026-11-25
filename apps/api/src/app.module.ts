@@ -57,7 +57,7 @@ import {
             password: process.env.DB_PASSWORD || 'deruta',
             database: process.env.DB_NAME || 'deruta',
             entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification, UserReport],
-            synchronize: false,
+            synchronize: process.env.DB_SYNCHRONIZE !== 'false',
             logging: false,
           } as DataSourceOptions;
         }

@@ -24,7 +24,9 @@ export class SeedService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    if (process.env.NODE_ENV === 'production') {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const shouldSeed = process.env.SEED_DATA === 'true';
+    if (isProduction && !shouldSeed) {
       return;
     }
 
@@ -83,22 +85,24 @@ export class SeedService implements OnApplicationBootstrap {
         rating: 4.5,
         totalTrips: 5,
       },
-      {
-        name: 'Admin',
-        lastName: 'DE RUTA',
-        email: 'admin@example.com',
-        passwordHash,
-        phone: '+54 9 11 00000000',
-        city: 'Buenos Aires',
-        role: 'admin',
-        emailVerified: true,
-        phoneVerified: true,
-        identityVerified: true,
-        dni: '00000000',
-        rating: 0,
-        totalTrips: 0,
-      },
     ]);
+
+    const adminUser = this.userRepository.create({
+      name: 'Admin',
+      lastName: 'DE RUTA',
+      email: 'admin@example.com',
+      passwordHash,
+      phone: '+54 9 11 00000000',
+      city: 'Buenos Aires',
+      role: 'admin',
+      emailVerified: true,
+      phoneVerified: true,
+      identityVerified: true,
+      dni: '00000000',
+      rating: 0,
+      totalTrips: 0,
+    });
+    await this.userRepository.save(adminUser);
 
     const [martin, lucia, juan] = users;
 

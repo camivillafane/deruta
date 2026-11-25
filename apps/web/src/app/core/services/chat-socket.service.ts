@@ -18,12 +18,19 @@ export class ChatSocketService {
     }
 
     const token = this.authService.getToken();
-    this.socket = io(`${environment.apiUrl}/chat`, {
+    this.socket = io(`${this.socketOrigin()}/chat`, {
       auth: { token },
       transports: ['websocket', 'polling'],
     });
 
     return this.socket;
+  }
+
+  private socketOrigin(): string {
+    if (environment.apiUrl.startsWith('http')) {
+      return new URL(environment.apiUrl).origin;
+    }
+    return window.location.origin;
   }
 
   disconnect(): void {

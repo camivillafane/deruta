@@ -7,6 +7,7 @@ import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { compare, hash } from 'bcryptjs';
 import { randomInt } from 'crypto';
 import { UsersService } from '../users/users.service.js';
+import type { User } from '../entities/index.js';
 import { LoginDto, RegisterDto } from './dto/auth.dto.js';
 import { VerifyCodeDto, VerifyIdentityDto } from './dto/verification.dto.js';
 import { EmailServiceFactory } from '../common/services/email.service.js';
@@ -17,15 +18,18 @@ export interface TokenPayload {
   email: string;
 }
 
+export type PublicUser = Omit<
+  User,
+  | 'passwordHash'
+  | 'refreshTokenHash'
+  | 'emailVerificationCode'
+  | 'phoneVerificationCode'
+>;
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
-  user: {
-    id: string;
-    name: string;
-    lastName: string;
-    email: string;
-  };
+  user: PublicUser;
 }
 
 @Injectable()
@@ -96,7 +100,18 @@ export class AuthService {
     await this.usersService.setRefreshTokenHash(userId, null);
   }
 
-  private async generateTokens(user: Awaited<ReturnType<typeof this.usersService.findById>>): Promise<AuthResponse> {
+  private sanitizeUser(user: User): PublicUser {
+    const {
+      passwordHash,
+      refreshTokenHash,
+      emailVerificationCode,
+      phoneVerificationCode,
+      ...publicUser
+    } = user;
+    return publicUser;
+  }
+
+  private async generateTokens(user: User): Promise<AuthResponse> {
     const payload: TokenPayload = { sub: user.id, email: user.email };
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m') as JwtSignOptions['expiresIn'],
@@ -113,12 +128,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      user: {
-        id: user.id,
-        name: user.name,
-        lastName: user.lastName,
-        email: user.email,
-      },
+      user: this.sanitizeUser(user),
     };
   }
 

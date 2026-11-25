@@ -1,20 +1,22 @@
 # syntax=docker/dockerfile:1
-FROM node:20-alpine AS builder
+FROM node:24-slim AS builder
 
 WORKDIR /app
 
 # Copy root package files
 COPY package*.json ./
 COPY apps/web/package*.json ./apps/web/
+COPY apps/api/package*.json ./apps/api/
 
-# Install dependencies
-RUN npm ci --workspace=apps/web
+# Install dependencies. El lockfile fue generado en Windows y no incluye los
+# bindings nativos de Linux (rolldown/lightningcss), asi que se reinstala sin
+# lockfile para que npm resuelva los paquetes de la plataforma actual.
+RUN rm -f package-lock.json && npm install --no-audit --no-fund
 
 # Copy source
 COPY apps/web ./apps/web
-COPY tsconfig*.json ./
 
-# Build web
+# Build web (configuración production: apiUrl relativa, proxied por nginx)
 RUN npm run build --workspace=apps/web
 
 # Production stage

@@ -1,0 +1,17 @@
+# Override para desarrollo local: evita conflictos de puertos con otros proyectos.
+# Uso: docker compose up -d   (Docker Compose aplica este archivo automáticamente)
+services:
+  db:
+    ports: !override
+      - "5433:5432"
+
+  api:
+    ports: !override
+      - "3001:3000"
+    environment:
+      LOCAL_STORAGE_URL: /uploads
+      SEED_DATA: "true"
+
+  web:
+    ports: !override
+      - "4200:80"

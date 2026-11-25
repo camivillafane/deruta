@@ -1,10 +1,14 @@
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import type { DataSourceOptions } from 'typeorm';
+
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import databaseConfig from './config/database.config.js';
+
 import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { VehiclesModule } from './vehicles/vehicles.module.js';
@@ -19,7 +23,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { ReportsModule } from './reports/reports.module.js';
 import { SeedModule } from './seeds/seed.module.js';
-import { ThrottlerModule } from '@nestjs/throttler';
+
 import {
   Alert,
   Conversation,
@@ -41,13 +45,18 @@ import {
       envFilePath: ['../../.env', '.env'],
       load: [databaseConfig],
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
+
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
+
     TypeOrmModule.forRootAsync({
       useFactory: () => {
         const isProduction = process.env.NODE_ENV === 'production';
+
         if (isProduction) {
           return {
             type: 'postgres',
@@ -56,23 +65,46 @@ import {
             username: process.env.DB_USER || 'deruta',
             password: process.env.DB_PASSWORD || 'deruta',
             database: process.env.DB_NAME || 'deruta',
-            entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification, UserReport],
-            synchronize: process.env.DB_SYNCHRONIZE !== 'false',
-            entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification],
-            // No hay migraciones todavía: DB_SYNCHRONIZE=true crea/actualiza las tablas desde las entidades.
+            entities: [
+              User,
+              Vehicle,
+              Trip,
+              TripRequest,
+              TripSearch,
+              Rating,
+              Conversation,
+              Message,
+              Alert,
+              Notification,
+              UserReport,
+            ],
             synchronize: process.env.DB_SYNCHRONIZE === 'true',
             logging: false,
           } as DataSourceOptions;
         }
+
         return {
           type: 'better-sqlite3',
           database: 'deruta-dev.sqlite',
-          entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification, UserReport],
+          entities: [
+            User,
+            Vehicle,
+            Trip,
+            TripRequest,
+            TripSearch,
+            Rating,
+            Conversation,
+            Message,
+            Alert,
+            Notification,
+            UserReport,
+          ],
           synchronize: true,
           logging: false,
         } as unknown as DataSourceOptions;
       },
     }),
+
     AuthModule,
     UsersModule,
     VehiclesModule,

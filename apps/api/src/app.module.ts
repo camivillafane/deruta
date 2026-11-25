@@ -58,6 +58,9 @@ import {
             database: process.env.DB_NAME || 'deruta',
             entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification, UserReport],
             synchronize: process.env.DB_SYNCHRONIZE !== 'false',
+            entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification],
+            // No hay migraciones todavía: DB_SYNCHRONIZE=true crea/actualiza las tablas desde las entidades.
+            synchronize: process.env.DB_SYNCHRONIZE === 'true',
             logging: false,
           } as DataSourceOptions;
         }

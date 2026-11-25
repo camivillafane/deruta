@@ -2,13 +2,22 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Trip } from '../models';
+import { Trip, TripRequest } from '../models';
 
 export interface SearchTripsParams {
   origin: string;
   destination: string;
   departureDate: string;
   passengers?: number;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedTrips {
+  data: Trip[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface CreateTripData {
@@ -31,7 +40,7 @@ export class TripsService {
 
   constructor(private http: HttpClient) {}
 
-  search(params: SearchTripsParams): Observable<Trip[]> {
+  search(params: SearchTripsParams): Observable<PaginatedTrips> {
     const query: Record<string, string> = {
       origin: params.origin,
       destination: params.destination,
@@ -40,11 +49,17 @@ export class TripsService {
     if (params.passengers) {
       query['passengers'] = String(params.passengers);
     }
-    return this.http.get<Trip[]>(`${this.apiUrl}/search`, { params: query });
+    if (params.page) {
+      query['page'] = String(params.page);
+    }
+    if (params.limit) {
+      query['limit'] = String(params.limit);
+    }
+    return this.http.get<PaginatedTrips>(`${this.apiUrl}/search`, { params: query });
   }
 
-  findAll(filters?: { origin?: string; destination?: string; date?: string }): Observable<Trip[]> {
-    return this.http.get<Trip[]>(this.apiUrl, { params: filters as Record<string, string> });
+  findAll(filters?: { origin?: string; destination?: string; date?: string; page?: number; limit?: number }): Observable<PaginatedTrips> {
+    return this.http.get<PaginatedTrips>(this.apiUrl, { params: filters as Record<string, string> });
   }
 
   getById(id: string): Observable<Trip> {
@@ -57,5 +72,13 @@ export class TripsService {
 
   getMyTrips(): Observable<Trip[]> {
     return this.http.get<Trip[]>(`${this.apiUrl}/driver/my-trips`);
+  }
+
+  complete(id: string): Observable<Trip> {
+    return this.http.post<Trip>(`${this.apiUrl}/${id}/complete`, {});
+  }
+
+  getMyRequest(id: string): Observable<{ request: TripRequest | null }> {
+    return this.http.get<{ request: TripRequest | null }>(`${this.apiUrl}/${id}/me`);
   }
 }

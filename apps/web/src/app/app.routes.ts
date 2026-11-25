@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -13,6 +14,11 @@ export const routes: Routes = [
   {
     path: 'registro',
     loadComponent: () => import('./features/auth/register/register.component').then((m) => m.RegisterComponent),
+  },
+  {
+    path: 'verificacion',
+    loadComponent: () => import('./features/auth/verification/verification.component').then((m) => m.VerificationComponent),
+    canActivate: [authGuard],
   },
   {
     path: 'buscar',
@@ -55,6 +61,16 @@ export const routes: Routes = [
     path: 'perfil',
     loadComponent: () => import('./features/profile/profile.component').then((m) => m.ProfileComponent),
     canActivate: [authGuard],
+  },
+  {
+    path: 'admin/verificaciones',
+    loadComponent: () => import('./features/admin/admin-verifications.component').then((m) => m.AdminVerificationsComponent),
+    canActivate: [authGuard, adminGuard],
+  },
+  {
+    path: 'admin/reportes',
+    loadComponent: () => import('./features/admin/admin-reports.component').then((m) => m.AdminReportsComponent),
+    canActivate: [authGuard, adminGuard],
   },
   {
     path: '**',

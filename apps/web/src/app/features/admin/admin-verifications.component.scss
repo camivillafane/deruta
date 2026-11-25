@@ -1,0 +1,66 @@
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-link {
+  font-weight: 600;
+  color: var(--color-orange);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.verification-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, 1rem);
+}
+
+.verification-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md, 1rem);
+
+  &__info {
+    h3 {
+      margin: 0 0 0.25rem;
+      font-size: 1.125rem;
+    }
+
+    p {
+      margin: 0.25rem 0;
+      color: var(--color-text-secondary, #666);
+      font-size: 0.875rem;
+    }
+  }
+
+  &__docs {
+    display: flex;
+    gap: var(--spacing-sm, 0.5rem);
+
+    a {
+      flex: 1;
+      border-radius: var(--radius-md, 0.5rem);
+      overflow: hidden;
+      border: 1px solid var(--color-border, #e5e7eb);
+    }
+
+    img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--spacing-sm, 0.5rem);
+  }
+}

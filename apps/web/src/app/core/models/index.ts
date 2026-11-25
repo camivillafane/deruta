@@ -7,6 +7,13 @@ export interface User {
   profileImage?: string;
   emailVerified: boolean;
   phoneVerified: boolean;
+  role: 'user' | 'admin';
+  identityVerified: boolean;
+  identitySubmittedAt?: string;
+  dni?: string;
+  licenseNumber?: string;
+  licenseFrontImage?: string;
+  licenseBackImage?: string;
   rating: number;
   totalTrips: number;
   city?: string;

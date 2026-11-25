@@ -1,0 +1,60 @@
+.verification-step {
+  margin-top: 1.5rem;
+
+  &--center {
+    text-align: center;
+  }
+}
+
+.step-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-text-secondary, #666);
+    font-size: 0.875rem;
+  }
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--color-primary, #2563eb);
+  color: white;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.resend-link {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  background: transparent;
+  border: none;
+  color: var(--color-primary, #2563eb);
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: center;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.status-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}

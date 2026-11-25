@@ -87,3 +87,16 @@
     color: var(--color-orange);
   }
 }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+
+  &__info {
+    font-size: 0.9375rem;
+    color: var(--color-text-secondary);
+  }
+}

@@ -8,6 +8,7 @@ import { CardComponent } from '../../../shared/components/card/card.component';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { RatingComponent } from '../../../shared/components/rating/rating.component';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-results',
@@ -23,11 +24,15 @@ export class ResultsComponent implements OnInit {
   destination = '';
   departureDate = '';
   passengers = 1;
+  page = 1;
+  limit = 10;
+  total = 0;
 
   constructor(
     private route: ActivatedRoute,
     private tripsService: TripsService,
     private alertsService: AlertsService,
+    private toastService: ToastService,
   ) {}
 
   ngOnInit(): void {
@@ -36,6 +41,7 @@ export class ResultsComponent implements OnInit {
       this.destination = params['destination'];
       this.departureDate = params['departureDate'];
       this.passengers = params['passengers'] || 1;
+      this.page = 1;
       this.search();
     });
   }
@@ -48,16 +54,30 @@ export class ResultsComponent implements OnInit {
         destination: this.destination,
         departureDate: this.departureDate,
         passengers: this.passengers,
+        page: this.page,
+        limit: this.limit,
       })
       .subscribe({
-        next: (trips) => {
-          this.trips = trips;
+        next: (response) => {
+          this.trips = response.data;
+          this.total = response.total;
+          this.page = response.page;
+          this.limit = response.limit;
           this.loading = false;
         },
         error: () => {
           this.loading = false;
         },
       });
+  }
+
+  goToPage(page: number): void {
+    this.page = page;
+    this.search();
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.total / this.limit);
   }
 
   createAlert(): void {
@@ -67,8 +87,14 @@ export class ResultsComponent implements OnInit {
         destination: this.destination,
         date: this.departureDate,
       })
-      .subscribe(() => {
-        alert('Te avisaremos cuando aparezca un viaje');
+      .subscribe({
+        next: () => {
+          this.toastService.success('Te avisaremos cuando aparezca un viaje');
+        },
+        error: (err) => {
+          const message = err?.error?.message || 'No se pudo crear la alerta';
+          this.toastService.error(message);
+        },
       });
   }
 

@@ -48,6 +48,14 @@
           </app-card>
         }
       </div>
+
+      @if (totalPages > 1) {
+        <div class="pagination">
+          <app-button variant="outline" size="sm" [disabled]="page === 1" (clicked)="goToPage(page - 1)">Anterior</app-button>
+          <span class="pagination__info">Página {{ page }} de {{ totalPages }}</span>
+          <app-button variant="outline" size="sm" [disabled]="page === totalPages" (clicked)="goToPage(page + 1)">Siguiente</app-button>
+        </div>
+      }
     }
   </div>
 </div>

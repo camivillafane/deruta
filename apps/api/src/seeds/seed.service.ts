@@ -24,7 +24,9 @@ export class SeedService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
-    if (process.env.NODE_ENV === 'production') {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const shouldSeed = process.env.SEED_DATA === 'true';
+    if (isProduction && !shouldSeed) {
       return;
     }
 
@@ -43,8 +45,12 @@ export class SeedService implements OnApplicationBootstrap {
         passwordHash,
         phone: '+54 9 345 1234567',
         city: 'Concordia',
+        role: 'user',
         emailVerified: true,
         phoneVerified: true,
+        identityVerified: true,
+        dni: '30123456',
+        licenseNumber: 'A123456789',
         rating: 4.9,
         totalTrips: 18,
       },
@@ -55,8 +61,12 @@ export class SeedService implements OnApplicationBootstrap {
         passwordHash,
         phone: '+54 9 341 7654321',
         city: 'Paraná',
+        role: 'user',
         emailVerified: true,
         phoneVerified: true,
+        identityVerified: true,
+        dni: '28345678',
+        licenseNumber: 'B987654321',
         rating: 4.7,
         totalTrips: 8,
       },
@@ -67,12 +77,32 @@ export class SeedService implements OnApplicationBootstrap {
         passwordHash,
         phone: '+54 9 11 9876543',
         city: 'Buenos Aires',
+        role: 'user',
         emailVerified: false,
         phoneVerified: true,
+        identityVerified: false,
+        dni: '35456789',
         rating: 4.5,
         totalTrips: 5,
       },
     ]);
+
+    const adminUser = this.userRepository.create({
+      name: 'Admin',
+      lastName: 'DE RUTA',
+      email: 'admin@example.com',
+      passwordHash,
+      phone: '+54 9 11 00000000',
+      city: 'Buenos Aires',
+      role: 'admin',
+      emailVerified: true,
+      phoneVerified: true,
+      identityVerified: true,
+      dni: '00000000',
+      rating: 0,
+      totalTrips: 0,
+    });
+    await this.userRepository.save(adminUser);
 
     const [martin, lucia, juan] = users;
 

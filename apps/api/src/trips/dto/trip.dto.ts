@@ -6,8 +6,11 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   Min,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsFutureDateString, IsTimeString } from '../../common/validators/date.validators.js';
 
 export class CreateTripDto {
   @IsString()
@@ -19,10 +22,12 @@ export class CreateTripDto {
   destination: string;
 
   @IsDateString()
+  @IsFutureDateString()
   departureDate: string;
 
   @IsString()
   @IsNotEmpty()
+  @IsTimeString()
   departureTime: string;
 
   @IsOptional()
@@ -55,21 +60,65 @@ export class SearchTripsDto {
   destination: string;
 
   @IsDateString()
+  @IsFutureDateString()
   departureDate: string;
 
   @IsOptional()
   @IsInt()
   @Min(1)
   passengers?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  page?: number = 1;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  @Type(() => Number)
+  limit?: number = 10;
+}
+
+export class ListTripsQueryDto {
+  @IsOptional()
+  @IsString()
+  origin?: string;
+
+  @IsOptional()
+  @IsString()
+  destination?: string;
+
+  @IsOptional()
+  @IsDateString()
+  @IsFutureDateString()
+  date?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  page?: number = 1;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  @Type(() => Number)
+  limit?: number = 10;
 }
 
 export class UpdateTripDto {
   @IsOptional()
   @IsDateString()
+  @IsFutureDateString()
   departureDate?: string;
 
   @IsOptional()
   @IsString()
+  @IsTimeString()
   departureTime?: string;
 
   @IsOptional()

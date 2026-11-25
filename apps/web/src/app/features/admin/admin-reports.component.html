@@ -1,0 +1,42 @@
+<div class="page">
+  <div class="container">
+    <h1 class="page-title">Reportes de usuarios</h1>
+
+    @if (loading) {
+      <p>Cargando...</p>
+    } @else if (reports.length === 0) {
+      <app-card>
+        <p>No hay reportes pendientes.</p>
+      </app-card>
+    } @else {
+      <div class="reports-list">
+        @for (report of reports; track report.id) {
+          <app-card>
+            <div class="report-card">
+              <div class="report-card__header">
+                <div>
+                  <h3>Reportado: {{ report.reportedUser.name }} {{ report.reportedUser.lastName }}</h3>
+                  <p class="report-card__email">{{ report.reportedUser.email }}</p>
+                </div>
+                <span class="report-card__date">{{ report.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <p><strong>Reportado por:</strong> {{ report.reporter.name }} {{ report.reporter.lastName }} ({{ report.reporter.email }})</p>
+              <p><strong>Motivo:</strong> {{ report.reason }}</p>
+              @if (report.description) {
+                <p><strong>Descripción:</strong> {{ report.description }}</p>
+              }
+              <div class="report-card__notes">
+                <app-input label="Notas del admin" [(ngModel)]="notes[report.id]" placeholder="Observaciones internas"></app-input>
+              </div>
+              <div class="report-card__actions">
+                <app-button variant="secondary" size="sm" (clicked)="blockAndResolve(report)">Bloquear y resolver</app-button>
+                <app-button variant="primary" size="sm" (clicked)="resolve(report.id)">Resolver</app-button>
+                <app-button variant="outline" size="sm" (clicked)="dismiss(report.id)">Descartar</app-button>
+              </div>
+            </div>
+          </app-card>
+        }
+      </div>
+    }
+  </div>
+</div>

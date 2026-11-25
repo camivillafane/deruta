@@ -37,10 +37,14 @@ export class InputComponent implements ControlValueAccessor {
   @Input() error = '';
   @Input() disabled = false;
 
-  value = '';
+  value: string | number = '';
 
   get hasError(): boolean {
     return !!this.error;
+  }
+
+  get isNumeric(): boolean {
+    return this.type === 'number';
   }
 
   constructor(@Optional() @Self() public ngControl: NgControl) {
@@ -49,14 +53,14 @@ export class InputComponent implements ControlValueAccessor {
     }
   }
 
-  onChange: (value: string) => void = () => {};
+  onChange: (value: string | number | null) => void = () => {};
   onTouched: () => void = () => {};
 
-  writeValue(value: string): void {
-    this.value = value || '';
+  writeValue(value: string | number | null): void {
+    this.value = value ?? '';
   }
 
-  registerOnChange(fn: (value: string) => void): void {
+  registerOnChange(fn: (value: string | number | null) => void): void {
     this.onChange = fn;
   }
 
@@ -71,6 +75,13 @@ export class InputComponent implements ControlValueAccessor {
   onInput(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.value = target.value;
+
+    if (this.isNumeric) {
+      const numericValue = this.value === '' ? null : Number(this.value);
+      this.onChange(numericValue);
+      return;
+    }
+
     this.onChange(this.value);
   }
 }

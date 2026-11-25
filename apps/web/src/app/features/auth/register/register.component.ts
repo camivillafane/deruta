@@ -120,7 +120,7 @@ export class RegisterComponent {
 
     this.authService.register(this.form.value).subscribe({
       next: () => {
-        this.router.navigate(['/']);
+        this.router.navigate(['/verificacion']);
       },
       error: (err) => {
         this.loading = false;

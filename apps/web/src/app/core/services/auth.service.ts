@@ -48,6 +48,37 @@ export class AuthService {
     );
   }
 
+  verifyEmail(code: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/verify-email`, { code });
+  }
+
+  resendEmail(): Observable<{ emailVerificationCode?: string }> {
+    return this.http.post<{ emailVerificationCode?: string }>(`${this.apiUrl}/resend-email`, {});
+  }
+
+  verifyPhone(code: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/verify-phone`, { code });
+  }
+
+  resendPhone(): Observable<{ phoneVerificationCode?: string }> {
+    return this.http.post<{ phoneVerificationCode?: string }>(`${this.apiUrl}/resend-phone`, {});
+  }
+
+  submitIdentity(data: { dni: string; licenseNumber: string; licenseFrontImage: string; licenseBackImage: string }): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/verify-identity`, data);
+  }
+
+  refreshUser(): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/verification-status`).pipe(
+      tap((user) => this.updateStoredUser(user)),
+    );
+  }
+
+  isVerified(user?: User | null): boolean {
+    const u = user || this.getCurrentUser();
+    return !!u && u.emailVerified && u.phoneVerified && u.identityVerified;
+  }
+
   logout(): void {
     this.clearSession();
     this.router.navigate(['/']);

@@ -31,11 +31,47 @@ export class User {
   @Column({ nullable: true })
   profileImage: string;
 
+  @Column({ type: 'varchar', length: 20, default: 'user' })
+  role: 'user' | 'admin';
+
   @Column({ default: false })
   emailVerified: boolean;
 
+  @Column({ nullable: true, type: 'varchar', select: false })
+  emailVerificationCode?: string;
+
+  @Column({ nullable: true, type: 'datetime' })
+  emailVerificationExpiresAt?: Date;
+
   @Column({ default: false })
   phoneVerified: boolean;
+
+  @Column({ nullable: true, type: 'varchar', select: false })
+  phoneVerificationCode?: string;
+
+  @Column({ nullable: true, type: 'datetime' })
+  phoneVerificationExpiresAt?: Date;
+
+  @Column({ nullable: true })
+  dni?: string;
+
+  @Column({ nullable: true })
+  licenseNumber?: string;
+
+  @Column({ nullable: true })
+  licenseFrontImage?: string;
+
+  @Column({ nullable: true })
+  licenseBackImage?: string;
+
+  @Column({ default: false })
+  identityVerified: boolean;
+
+  @Column({ nullable: true, type: 'datetime' })
+  identitySubmittedAt?: Date;
+
+  @Column({ nullable: true, type: 'datetime' })
+  identityVerifiedAt?: Date;
 
   @Column({ type: 'decimal', precision: 2, scale: 1, default: 0 })
   rating: number;
@@ -48,6 +84,15 @@ export class User {
 
   @Column({ nullable: true, type: 'varchar', select: false })
   refreshTokenHash?: string;
+
+  @Column({ default: false })
+  isBlocked: boolean;
+
+  @Column({ nullable: true, type: 'text' })
+  blockedReason?: string;
+
+  @Column({ nullable: true, type: 'datetime' })
+  blockedAt?: Date;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -165,6 +210,9 @@ export class Trip {
 
   @Column({ nullable: true })
   vehicleId: string;
+
+  @OneToMany(() => TripRequest, (request) => request.trip)
+  requests: TripRequest[];
 
   @CreateDateColumn()
   createdAt: Date;
@@ -385,4 +433,46 @@ export class Notification {
 
   @CreateDateColumn()
   createdAt: Date;
+}
+
+export enum UserReportStatus {
+  PENDING = 'pending',
+  RESOLVED = 'resolved',
+  DISMISSED = 'dismissed',
+}
+
+@Entity('user_reports')
+export class UserReport {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  reporter: User;
+
+  @Column()
+  reporterId: string;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  reportedUser: User;
+
+  @Column()
+  reportedUserId: string;
+
+  @Column({ type: 'text' })
+  reason: string;
+
+  @Column({ nullable: true, type: 'text' })
+  description?: string;
+
+  @Column({ type: 'varchar', length: 20, default: UserReportStatus.PENDING })
+  status: UserReportStatus;
+
+  @Column({ nullable: true, type: 'text' })
+  adminNotes?: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

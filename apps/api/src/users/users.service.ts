@@ -19,6 +19,20 @@ export interface UpdateUserData {
   city?: string;
 }
 
+export interface VerificationCodes {
+  emailVerificationCode?: string;
+  emailVerificationExpiresAt?: Date;
+  phoneVerificationCode?: string;
+  phoneVerificationExpiresAt?: Date;
+}
+
+export interface IdentityData {
+  dni: string;
+  licenseNumber: string;
+  licenseFrontImage: string;
+  licenseBackImage: string;
+}
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -61,6 +75,8 @@ export class UsersService {
       .createQueryBuilder('user')
       .addSelect('user.passwordHash')
       .addSelect('user.refreshTokenHash')
+      .addSelect('user.emailVerificationCode')
+      .addSelect('user.phoneVerificationCode')
       .where('user.id = :id', { id })
       .getOne();
     if (!user) {
@@ -94,6 +110,40 @@ export class UsersService {
     await this.userRepository.update(userId, {
       rating: Math.round(average * 10) / 10,
       totalTrips: count,
+    });
+  }
+
+  async setVerificationCodes(id: string, codes: VerificationCodes): Promise<void> {
+    await this.userRepository.update(id, codes);
+  }
+
+  async verifyEmail(id: string): Promise<void> {
+    await this.userRepository.update(id, {
+      emailVerified: true,
+      emailVerificationCode: null as any,
+      emailVerificationExpiresAt: null as any,
+    });
+  }
+
+  async verifyPhone(id: string): Promise<void> {
+    await this.userRepository.update(id, {
+      phoneVerified: true,
+      phoneVerificationCode: null as any,
+      phoneVerificationExpiresAt: null as any,
+    });
+  }
+
+  async submitIdentity(id: string, data: IdentityData): Promise<void> {
+    await this.userRepository.update(id, {
+      ...data,
+      identitySubmittedAt: new Date(),
+    });
+  }
+
+  async approveIdentity(id: string): Promise<void> {
+    await this.userRepository.update(id, {
+      identityVerified: true,
+      identityVerifiedAt: new Date(),
     });
   }
 }

@@ -5,24 +5,31 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { compare, hash } from 'bcryptjs';
-import { randomBytes } from 'crypto';
+import { randomInt } from 'crypto';
 import { UsersService } from '../users/users.service.js';
+import type { User } from '../entities/index.js';
 import { LoginDto, RegisterDto } from './dto/auth.dto.js';
+import { VerifyCodeDto, VerifyIdentityDto } from './dto/verification.dto.js';
+import { EmailServiceFactory } from '../common/services/email.service.js';
+import { SmsServiceFactory } from '../common/services/sms.service.js';
 
 export interface TokenPayload {
   sub: string;
   email: string;
 }
 
+export type PublicUser = Omit<
+  User,
+  | 'passwordHash'
+  | 'refreshTokenHash'
+  | 'emailVerificationCode'
+  | 'phoneVerificationCode'
+>;
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
-  user: {
-    id: string;
-    name: string;
-    lastName: string;
-    email: string;
-  };
+  user: PublicUser;
 }
 
 @Injectable()
@@ -31,6 +38,8 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly emailServiceFactory: EmailServiceFactory,
+    private readonly smsServiceFactory: SmsServiceFactory,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
@@ -42,6 +51,11 @@ export class AuthService {
       passwordHash,
       phone: dto.phone,
     });
+
+    const codes = this.generateVerificationCodes();
+    await this.usersService.setVerificationCodes(user.id, codes);
+
+    await this.sendVerificationCodes(user.email, user.phone, codes);
 
     return this.generateTokens(user);
   }
@@ -55,6 +69,10 @@ export class AuthService {
     const valid = await compare(dto.password, user.passwordHash);
     if (!valid) {
       throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    if (user.isBlocked) {
+      throw new UnauthorizedException(user.blockedReason || 'Tu cuenta ha sido bloqueada. Contactá al soporte.');
     }
 
     return this.generateTokens(user);
@@ -82,13 +100,25 @@ export class AuthService {
     await this.usersService.setRefreshTokenHash(userId, null);
   }
 
-  private async generateTokens(user: Awaited<ReturnType<typeof this.usersService.findById>>): Promise<AuthResponse> {
+  private sanitizeUser(user: User): PublicUser {
+    const {
+      passwordHash,
+      refreshTokenHash,
+      emailVerificationCode,
+      phoneVerificationCode,
+      ...publicUser
+    } = user;
+    return publicUser;
+  }
+
+  private async generateTokens(user: User): Promise<AuthResponse> {
     const payload: TokenPayload = { sub: user.id, email: user.email };
-    const signOptions: JwtSignOptions = {
+    const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m') as JwtSignOptions['expiresIn'],
-    };
-    const accessToken = this.jwtService.sign(payload, signOptions);
-    const refreshToken = randomBytes(32).toString('hex');
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d') as JwtSignOptions['expiresIn'],
+    });
 
     await this.usersService.setRefreshTokenHash(
       user.id,
@@ -98,16 +128,124 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      user: {
-        id: user.id,
-        name: user.name,
-        lastName: user.lastName,
-        email: user.email,
-      },
+      user: this.sanitizeUser(user),
     };
   }
 
   async validateUser(userId: string) {
     return this.usersService.findById(userId);
+  }
+
+  async verifyEmail(userId: string, dto: VerifyCodeDto): Promise<void> {
+    const user = await this.usersService.findByIdWithCredentials(userId);
+    if (user.emailVerified) {
+      return;
+    }
+    if (!user.emailVerificationCode || user.emailVerificationCode !== dto.code) {
+      throw new UnauthorizedException('Código incorrecto');
+    }
+    if (user.emailVerificationExpiresAt && new Date() > new Date(user.emailVerificationExpiresAt)) {
+      throw new UnauthorizedException('El código expiró');
+    }
+    await this.usersService.verifyEmail(userId);
+  }
+
+  async resendEmailVerification(userId: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (user.emailVerified) {
+      return;
+    }
+    const code = this.generateCode();
+    const expiresAt = this.expiresAt();
+    await this.usersService.setVerificationCodes(userId, {
+      emailVerificationCode: code,
+      emailVerificationExpiresAt: expiresAt,
+    });
+    await this.sendVerificationCodes(user.email, undefined, {
+      emailVerificationCode: code,
+      emailVerificationExpiresAt: expiresAt,
+    });
+  }
+
+  async verifyPhone(userId: string, dto: VerifyCodeDto): Promise<void> {
+    const user = await this.usersService.findByIdWithCredentials(userId);
+    if (user.phoneVerified) {
+      return;
+    }
+    if (!user.phoneVerificationCode || user.phoneVerificationCode !== dto.code) {
+      throw new UnauthorizedException('Código incorrecto');
+    }
+    if (user.phoneVerificationExpiresAt && new Date() > new Date(user.phoneVerificationExpiresAt)) {
+      throw new UnauthorizedException('El código expiró');
+    }
+    await this.usersService.verifyPhone(userId);
+  }
+
+  async resendPhoneVerification(userId: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (user.phoneVerified || !user.phone) {
+      return;
+    }
+    const code = this.generateCode();
+    const expiresAt = this.expiresAt();
+    await this.usersService.setVerificationCodes(userId, {
+      phoneVerificationCode: code,
+      phoneVerificationExpiresAt: expiresAt,
+    });
+    await this.sendVerificationCodes(undefined, user.phone, {
+      phoneVerificationCode: code,
+      phoneVerificationExpiresAt: expiresAt,
+    });
+  }
+
+  async submitIdentity(userId: string, dto: VerifyIdentityDto): Promise<void> {
+    await this.usersService.submitIdentity(userId, dto);
+    const storageProvider = this.configService.get<string>('STORAGE_PROVIDER', 'local');
+    if (storageProvider === 'local') {
+      await this.usersService.approveIdentity(userId);
+    }
+  }
+
+  private generateVerificationCodes() {
+    return {
+      emailVerificationCode: this.generateCode(),
+      emailVerificationExpiresAt: this.expiresAt(),
+      phoneVerificationCode: this.generateCode(),
+      phoneVerificationExpiresAt: this.expiresAt(),
+    };
+  }
+
+  private generateCode(): string {
+    return String(randomInt(100000, 1000000));
+  }
+
+  private expiresAt(): Date {
+    const minutes = parseInt(this.configService.get<string>('VERIFICATION_CODE_EXPIRATION_MINUTES', '30'), 10);
+    return new Date(Date.now() + minutes * 60 * 1000);
+  }
+
+  private async sendVerificationCodes(
+    email?: string,
+    phone?: string,
+    codes?: Partial<ReturnType<typeof this.generateVerificationCodes>>,
+  ): Promise<void> {
+    const emailService = this.emailServiceFactory.create();
+    const smsService = this.smsServiceFactory.create();
+
+    if (email && codes?.emailVerificationCode) {
+      await emailService.send({
+        to: email,
+        subject: 'Tu código de verificación - DE RUTA',
+        text: `Tu código para verificar tu email es: ${codes.emailVerificationCode}. Vence en ${this.configService.get('VERIFICATION_CODE_EXPIRATION_MINUTES', '30')} minutos.`,
+        html: `<p>Tu código para verificar tu email es: <strong>${codes.emailVerificationCode}</strong></p><p>Vence en ${this.configService.get('VERIFICATION_CODE_EXPIRATION_MINUTES', '30')} minutos.</p>`,
+      });
+    }
+
+    if (phone && codes?.phoneVerificationCode) {
+      await smsService.send({
+        to: phone,
+        body: `Tu código de verificación de DE RUTA es: ${codes.phoneVerificationCode}. Vence en ${this.configService.get('VERIFICATION_CODE_EXPIRATION_MINUTES', '30')} minutos.`,
+      });
+    }
   }
 }

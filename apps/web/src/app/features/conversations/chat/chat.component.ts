@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ConversationsService } from '../../../core/services';
+import { ChatSocketService } from '../../../core/services/chat-socket.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Message } from '../../../core/models';
 import { CardComponent } from '../../../shared/components/card/card.component';
@@ -17,7 +18,7 @@ import { AvatarComponent } from '../../../shared/components/avatar/avatar.compon
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent implements OnInit, OnDestroy {
   conversationId = '';
   messages: Message[] = [];
   currentUserId = '';
@@ -27,6 +28,7 @@ export class ChatComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private conversationsService: ConversationsService,
+    private chatSocketService: ChatSocketService,
     private authService: AuthService,
     private fb: FormBuilder,
   ) {
@@ -39,6 +41,12 @@ export class ChatComponent implements OnInit {
   ngOnInit(): void {
     this.conversationId = this.route.snapshot.paramMap.get('id') || '';
     this.loadMessages();
+    this.setupSocket();
+  }
+
+  ngOnDestroy(): void {
+    this.chatSocketService.leave(this.conversationId);
+    this.chatSocketService.disconnect();
   }
 
   loadMessages(): void {
@@ -47,13 +55,22 @@ export class ChatComponent implements OnInit {
     });
   }
 
+  setupSocket(): void {
+    this.chatSocketService.connect();
+    this.chatSocketService.join(this.conversationId);
+    this.chatSocketService.onNewMessage().subscribe((message: Message) => {
+      if (message.conversationId === this.conversationId) {
+        this.messages.push(message);
+      }
+    });
+  }
+
   onSubmit(): void {
     if (this.form.invalid) return;
     this.sending = true;
-    this.conversationsService.sendMessage(this.conversationId, this.form.value.content).subscribe(() => {
-      this.sending = false;
-      this.form.reset();
-      this.loadMessages();
-    });
+    const content = this.form.value.content;
+    this.chatSocketService.sendMessage(this.conversationId, content);
+    this.sending = false;
+    this.form.reset();
   }
 }

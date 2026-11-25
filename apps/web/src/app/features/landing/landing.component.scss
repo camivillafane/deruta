@@ -1,142 +1,137 @@
 .landing-hero {
   background-color: var(--color-white);
-  padding: 48px 0 64px;
+  padding: 48px 0 24px;
 
   @media (min-width: 768px) {
-    padding: 80px 0 100px;
+    padding: 80px 0 32px;
   }
 
-  &__content {
+  &__top {
     display: grid;
     gap: 40px;
-    align-items: center;
+    align-items: stretch;
+    margin-bottom: 32px;
 
     @media (min-width: 768px) {
       grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+
+    @media (min-width: 1024px) {
+      grid-template-columns: 1.1fr 1fr;
       gap: 64px;
     }
   }
 
-  &__tagline {
-    display: inline-block;
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: var(--color-orange);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
+  &__intro {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 32px;
   }
 
   &__title {
-    font-size: 2.25rem;
+    font-size: 2rem;
     font-weight: 800;
     color: var(--color-violet);
     line-height: 1.15;
-    margin-bottom: 16px;
+    margin: 0;
 
     @media (min-width: 768px) {
-      font-size: 3rem;
+      font-size: 2.5rem;
     }
-  }
-
-  &__description {
-    font-size: 1.0625rem;
-    color: var(--color-text-secondary);
-    margin-bottom: 28px;
-    max-width: 540px;
-    line-height: 1.6;
   }
 
   &__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 16px;
-  }
-
-  &__tertiary {
-    a {
-      font-weight: 600;
-      color: var(--color-magenta);
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
   }
 
   &__visual {
     display: flex;
     justify-content: center;
+    width: 100%;
+
+    @media (min-width: 768px) {
+      justify-content: flex-end;
+    }
+
+    app-card {
+      width: 100%;
+      height: 100%;
+
+      .app-card {
+        padding: 32px;
+        height: 100%;
+      }
+    }
   }
 }
 
-.route-card {
-  background-color: var(--color-gray-light);
-  border-radius: var(--radius-xl);
-  padding: 24px;
+.hero-search-form {
   width: 100%;
-  max-width: 340px;
-  box-shadow: var(--shadow-lg);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  &__title {
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--color-violet);
-    margin-bottom: 8px;
-  }
-
-  &__arrow {
-    color: var(--color-orange);
-  }
-
-  &__details {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9375rem;
-    color: var(--color-text-secondary);
     margin-bottom: 20px;
   }
 
-  &__price {
-    font-weight: 700;
-    color: var(--color-orange);
+  &__row {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 14px;
+
+    @media (min-width: 768px) {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 
-  &__driver {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  &__row:last-of-type {
+    flex: 1;
   }
 
-  &__avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--color-orange) 0%, var(--color-magenta) 100%);
-    color: var(--color-white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
+  app-input {
+    display: block;
   }
 
-  &__name {
-    font-weight: 600;
-    color: var(--color-text);
+  app-button {
+    margin-top: auto;
+  }
+}
+
+.landing-description {
+  background-color: var(--color-gray-light);
+  padding: 64px 0;
+
+  @media (min-width: 768px) {
+    padding: 80px 0;
   }
 
-  &__rating {
-    font-size: 0.8125rem;
+  &__text {
+    font-size: 1.25rem;
     color: var(--color-text-secondary);
+    line-height: 1.7;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+
+    @media (min-width: 768px) {
+      font-size: 1.375rem;
+    }
   }
 }
 
 .landing-features {
   padding: 64px 0;
+  background-color: var(--color-white);
 
   &__title {
     font-size: 1.75rem;
@@ -157,10 +152,11 @@
 }
 
 .feature-card {
-  background-color: var(--color-white);
+  background-color: var(--color-gray-light);
   border-radius: var(--radius-lg);
   padding: 24px;
   box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 
   &__number {
     width: 36px;

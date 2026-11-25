@@ -40,6 +40,24 @@
             </div>
           </div>
 
+          @if (canReport()) {
+            @if (!showReportForm) {
+              <app-button variant="ghost" size="sm" [fullWidth]="true" (clicked)="showReportForm = true">
+                Reportar conductor
+              </app-button>
+            } @else {
+              <div class="trip-detail__report">
+                <h3>Reportar conductor</h3>
+                <app-input label="Motivo" formControlName="reason" placeholder="Ej: comportamiento inapropiado"></app-input>
+                <app-input label="Detalle (opcional)" formControlName="description" placeholder="Contanos qué pasó"></app-input>
+                <div class="trip-detail__report-actions">
+                  <app-button variant="outline" size="sm" (clicked)="showReportForm = false">Cancelar</app-button>
+                  <app-button variant="primary" size="sm" [loading]="reporting" (clicked)="submitReport()">Enviar reporte</app-button>
+                </div>
+              </div>
+            }
+          }
+
           @if (trip.vehicle) {
             <div class="trip-detail__section">
               <h3>Vehículo</h3>

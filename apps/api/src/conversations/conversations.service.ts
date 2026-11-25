@@ -1,12 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { toPublicUser } from '../common/utils/user.mapper.js';
 import { Conversation } from '../entities/index.js';
 import { Message } from '../entities/index.js';
 import { Trip } from '../entities/index.js';
 import { TripRequest, TripRequestStatus } from '../entities/index.js';
 import { SendMessageDto } from '../messages/dto/message.dto.js';
 import { CreateConversationDto } from './dto/conversation.dto.js';
+import { NotificationDispatcherService } from '../common/services/notification-dispatcher.service.js';
 
 @Injectable()
 export class ConversationsService {
@@ -19,6 +21,7 @@ export class ConversationsService {
     private readonly tripRepository: Repository<Trip>,
     @InjectRepository(TripRequest)
     private readonly requestRepository: Repository<TripRequest>,
+    private readonly notificationDispatcher: NotificationDispatcherService,
   ) {}
 
   async create(userId: string, dto: CreateConversationDto): Promise<Conversation> {
@@ -54,7 +57,9 @@ export class ConversationsService {
       .getMany();
 
     const map = new Map<string, Conversation>();
-    [...asDriver, ...asPassenger].forEach((c) => map.set(c.id, c));
+    [...asDriver, ...asPassenger].forEach((c) => {
+      map.set(c.id, { ...c, trip: { ...c.trip, driver: toPublicUser(c.trip.driver) as Trip['driver'] } });
+    });
     return Array.from(map.values());
   }
 
@@ -68,26 +73,66 @@ export class ConversationsService {
     }
 
     await this.validateAccess(userId, conversation.tripId);
-    return conversation;
+    return { ...conversation, trip: { ...conversation.trip, driver: toPublicUser(conversation.trip.driver) as Trip['driver'] } };
   }
 
   async sendMessage(senderId: string, dto: SendMessageDto): Promise<Message> {
+    if (!dto.conversationId) {
+      throw new BadRequestException('Falta el identificador de la conversación');
+    }
     const conversation = await this.findOne(dto.conversationId, senderId);
     const message = this.messageRepository.create({
       conversationId: conversation.id,
       senderId,
       content: dto.content,
     });
-    return this.messageRepository.save(message);
+    const saved = await this.messageRepository.save(message);
+
+    const trip = conversation.trip;
+    const isDriver = trip.driverId === senderId;
+    if (isDriver) {
+      const acceptedRequests = await this.requestRepository.find({
+        where: { tripId: trip.id, status: TripRequestStatus.ACCEPTED },
+      });
+      for (const request of acceptedRequests) {
+        await this.notificationDispatcher.notify({
+          userId: request.passengerId,
+          title: 'Nuevo mensaje',
+          message: `Recibiste un mensaje sobre el viaje ${trip.origin} → ${trip.destination}`,
+          link: `/mensajes/${conversation.id}`,
+          email: {
+            subject: 'Nuevo mensaje - DE RUTA',
+            text: `Recibiste un mensaje sobre el viaje ${trip.origin} → ${trip.destination}. Ingresá para leerlo.`,
+          },
+        });
+      }
+    } else {
+      await this.notificationDispatcher.notify({
+        userId: trip.driverId,
+        title: 'Nuevo mensaje',
+        message: `Recibiste un mensaje sobre el viaje ${trip.origin} → ${trip.destination}`,
+        link: `/mensajes/${conversation.id}`,
+        email: {
+          subject: 'Nuevo mensaje - DE RUTA',
+          text: `Recibiste un mensaje sobre el viaje ${trip.origin} → ${trip.destination}. Ingresá para leerlo.`,
+        },
+      });
+    }
+
+    return saved;
   }
 
   async findMessages(conversationId: string, userId: string): Promise<Message[]> {
     await this.findOne(conversationId, userId);
-    return this.messageRepository.find({
+    const messages = await this.messageRepository.find({
       where: { conversationId },
       relations: { sender: true },
       order: { createdAt: 'ASC' },
     });
+    return messages.map((message) => ({
+      ...message,
+      sender: toPublicUser(message.sender) as Message['sender'],
+    }));
   }
 
   private async validateAccess(userId: string, tripId: string): Promise<void> {

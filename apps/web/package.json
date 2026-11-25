@@ -33,5 +33,8 @@
     "sass-embedded": "^1.104.1",
     "typescript": "~6.0.2",
     "vitest": "^5.0.0"
+  },
+  "optionalDependencies": {
+    "@oxc-parser/binding-linux-x64-gnu": "^0.150.0"
   }
 }

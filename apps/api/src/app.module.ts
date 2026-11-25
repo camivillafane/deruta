@@ -49,7 +49,8 @@ import {
             password: process.env.DB_PASSWORD || 'deruta',
             database: process.env.DB_NAME || 'deruta',
             entities: [User, Vehicle, Trip, TripRequest, TripSearch, Rating, Conversation, Message, Alert, Notification],
-            synchronize: false,
+            // No hay migraciones todavía: DB_SYNCHRONIZE=true crea/actualiza las tablas desde las entidades.
+            synchronize: process.env.DB_SYNCHRONIZE === 'true',
             logging: false,
           } as DataSourceOptions;
         }

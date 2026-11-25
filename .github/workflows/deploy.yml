@@ -1,0 +1,100 @@
+name: Deploy DE RUTA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "deploy/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+# Un deploy a la vez: dos corridas pisándose dejarían el servidor a medias.
+concurrency:
+  group: deploy-deruta
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Angular 22 pide Node >= 22.22 o >= 24.15.
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Test API
+        run: npm run test:api
+
+      - name: Test web
+        working-directory: apps/web
+        run: npx ng test --watch=false
+
+      - name: Build
+        run: npm run build
+
+      - name: Pack deploy bundle
+        run: |
+          set -e
+          mkdir -p bundle/source/apps/api bundle/source/apps/web bundle/nginx
+          # Lo que necesita la imagen de la API (se arma en el servidor con el build ya hecho).
+          cp package.json package-lock.json bundle/source/
+          cp apps/api/package.json bundle/source/apps/api/
+          cp apps/web/package.json bundle/source/apps/web/
+          cp -r apps/api/dist bundle/source/apps/api/dist
+          # Archivos del servidor.
+          cp deploy/Dockerfile deploy/docker-compose.yml bundle/
+          cp deploy/nginx/web.conf bundle/nginx/web.conf
+          # Web estática.
+          cp -r apps/web/dist/web/browser bundle/web
+          tar -czf deploy.tar.gz -C bundle .
+
+      - name: Copy bundle
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DERUTA_HOST }}
+          username: ${{ secrets.DERUTA_USER }}
+          key: ${{ secrets.DERUTA_SSH_KEY }}
+          port: ${{ secrets.DERUTA_SSH_PORT }}
+          source: deploy.tar.gz
+          target: /opt/deruta/
+
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DERUTA_HOST }}
+          username: ${{ secrets.DERUTA_USER }}
+          key: ${{ secrets.DERUTA_SSH_KEY }}
+          port: ${{ secrets.DERUTA_SSH_PORT }}
+          command_timeout: 20m
+          script: |
+            set -e
+            cd /opt/deruta
+            test -f .env || { echo "Falta /opt/deruta/.env (ver deploy/README.md)"; exit 1; }
+            # Se borra lo anterior para que no queden archivos de versiones viejas.
+            rm -rf source web nginx
+            tar -xzf deploy.tar.gz
+            rm -f deploy.tar.gz
+            docker compose up -d --build
+            # La web se recrea SIEMPRE: el contenedor monta ./web y ./nginx/web.conf, que se borran y se
+            # vuelven a crear en cada deploy; sin recrearlo seguiría mirando la carpeta vieja y daría 500.
+            docker compose up -d --force-recreate --no-deps web
+            for i in $(seq 1 30); do
+              status=$(docker inspect -f '{{.State.Health.Status}}' deruta-api 2>/dev/null || echo none)
+              [ "$status" = healthy ] && break
+              sleep 5
+            done
+            docker compose ps
+            if [ "$status" != healthy ]; then docker logs --tail 80 deruta-api; exit 1; fi
+            # El proxy compartido NO se toca desde acá: ver deploy/README.md.
+            docker image prune -f

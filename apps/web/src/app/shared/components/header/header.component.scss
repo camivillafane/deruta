@@ -69,4 +69,14 @@
       }
     }
   }
+
+  // Sin sesión, los botones de Ingresar/Registrarme se muestran en todos los tamaños.
+  &__actions--guest {
+    display: flex;
+    gap: 4px;
+
+    @media (min-width: 768px) {
+      gap: 8px;
+    }
+  }
 }

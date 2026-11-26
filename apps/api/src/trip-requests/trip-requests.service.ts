@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Trip, TripStatus } from '../entities/index.js';
 import { TripRequest, TripRequestStatus } from '../entities/index.js';
 import { Conversation } from '../entities/index.js';
@@ -35,10 +35,9 @@ export class TripRequestsService {
         throw new BadRequestException('Este viaje no está activo');
       }
 
+      // availableSeats son los lugares que QUEDAN: se descuentan al aceptar.
       const seats = dto.seats || 1;
-      const acceptedSeats = await this.getAcceptedSeatsWithManager(manager, dto.tripId);
-
-      if (acceptedSeats + seats > trip.availableSeats) {
+      if (seats > trip.availableSeats) {
         throw new BadRequestException('No hay suficientes lugares disponibles');
       }
 
@@ -113,12 +112,10 @@ export class TripRequestsService {
       this.validateStatusTransition(request.status, dto.status);
 
       if (dto.status === TripRequestStatus.ACCEPTED) {
-        const acceptedSeats = await this.getAcceptedSeatsWithManager(manager, request.tripId, request.id);
-        if (acceptedSeats + request.seats > request.trip.availableSeats) {
+        const reserved = await this.reserveSeats(manager, request.tripId, request.seats);
+        if (!reserved) {
           throw new BadRequestException('No hay suficientes lugares disponibles');
         }
-        request.trip.availableSeats -= request.seats;
-        await manager.save(request.trip);
 
         const existingConversation = await manager.findOne(Conversation, {
           where: { tripId: request.tripId },
@@ -133,10 +130,12 @@ export class TripRequestsService {
         request.status === TripRequestStatus.ACCEPTED &&
         (dto.status === TripRequestStatus.REJECTED || dto.status === TripRequestStatus.CANCELLED)
       ) {
-        request.trip.availableSeats += request.seats;
-        await manager.save(request.trip);
+        await this.releaseSeats(manager, request.tripId, request.seats);
       }
 
+      // Recargar el viaje: los lugares se cambiaron con un UPDATE directo y la
+      // copia en memoria quedó vieja (no queremos que un save la pise).
+      request.trip = await manager.findOneOrFail(Trip, { where: { id: request.tripId } });
       request.status = dto.status;
       const saved = await manager.save(request);
 
@@ -173,9 +172,9 @@ export class TripRequestsService {
         throw new BadRequestException('La solicitud ya está cancelada');
       }
       if (request.status === TripRequestStatus.ACCEPTED) {
-        request.trip.availableSeats += request.seats;
-        await manager.save(request.trip);
+        await this.releaseSeats(manager, request.tripId, request.seats);
       }
+      request.trip = await manager.findOneOrFail(Trip, { where: { id: request.tripId } });
       request.status = TripRequestStatus.CANCELLED;
       const saved = await manager.save(request);
 
@@ -207,22 +206,30 @@ export class TripRequestsService {
     }
   }
 
-  private async getAcceptedSeatsWithManager(
-    manager: any,
-    tripId: string,
-    excludeRequestId?: string,
-  ): Promise<number> {
-    const query = manager
-      .createQueryBuilder(TripRequest, 'request')
-      .select('SUM(request.seats)', 'total')
-      .where('request.tripId = :tripId', { tripId })
-      .andWhere('request.status = :status', { status: TripRequestStatus.ACCEPTED });
+  /**
+   * Descuenta lugares en un solo UPDATE condicionado, así dos aceptaciones
+   * simultáneas no pueden dejar el viaje con lugares negativos.
+   * Devuelve false si no alcanzaban.
+   */
+  private async reserveSeats(manager: EntityManager, tripId: string, seats: number): Promise<boolean> {
+    const result = await manager
+      .createQueryBuilder()
+      .update(Trip)
+      .set({ availableSeats: () => '"availableSeats" - :seats' })
+      .where('id = :tripId', { tripId })
+      .andWhere('"availableSeats" >= :seats')
+      .setParameter('seats', seats)
+      .execute();
+    return (result.affected ?? 0) > 0;
+  }
 
-    if (excludeRequestId) {
-      query.andWhere('request.id != :excludeRequestId', { excludeRequestId });
-    }
-
-    const result = await query.getRawOne();
-    return parseInt(result?.total || '0', 10);
+  private async releaseSeats(manager: EntityManager, tripId: string, seats: number): Promise<void> {
+    await manager
+      .createQueryBuilder()
+      .update(Trip)
+      .set({ availableSeats: () => '"availableSeats" + :seats' })
+      .where('id = :tripId', { tripId })
+      .setParameter('seats', seats)
+      .execute();
   }
 }

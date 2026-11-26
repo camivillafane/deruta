@@ -1,8 +1,11 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 
 @Component({
+  // Angular 22 usa OnPush por defecto; este componente actualiza estado común
+  // (no signals) dentro de subscribe, así que necesita Eager para refrescar la vista.
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-not-found',
   standalone: true,
   imports: [RouterModule, ButtonComponent],

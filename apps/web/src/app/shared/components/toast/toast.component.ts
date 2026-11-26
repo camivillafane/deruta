@@ -1,9 +1,12 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { Toast, ToastService } from './toast.service';
 
 @Component({
+  // Angular 22 usa OnPush por defecto; este componente actualiza estado común
+  // (no signals) dentro de subscribe, así que necesita Eager para refrescar la vista.
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-toast',
   standalone: true,
   imports: [CommonModule],

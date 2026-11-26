@@ -1,10 +1,13 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 @Component({
+  // Angular 22 usa OnPush por defecto; este componente actualiza estado común
+  // (no signals) dentro de subscribe, así que necesita Eager para refrescar la vista.
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-button',
   standalone: true,
   imports: [CommonModule],

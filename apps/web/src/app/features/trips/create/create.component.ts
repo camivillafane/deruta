@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -11,6 +11,9 @@ import { SelectComponent } from '../../../shared/components/select/select.compon
 import { CardComponent } from '../../../shared/components/card/card.component';
 
 @Component({
+  // Angular 22 usa OnPush por defecto; este componente actualiza estado común
+  // (no signals) dentro de subscribe, así que necesita Eager para refrescar la vista.
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-create-trip',
   standalone: true,
   imports: [

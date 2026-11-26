@@ -16,6 +16,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register.component').then((m) => m.RegisterComponent),
   },
   {
+    path: 'olvide-mi-clave',
+    loadComponent: () =>
+      import('./features/auth/forgot-password/forgot-password.component').then((m) => m.ForgotPasswordComponent),
+  },
+  {
+    path: 'restablecer-clave',
+    loadComponent: () =>
+      import('./features/auth/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent),
+  },
+  {
     path: 'verificacion',
     loadComponent: () => import('./features/auth/verification/verification.component').then((m) => m.VerificationComponent),
     canActivate: [authGuard],

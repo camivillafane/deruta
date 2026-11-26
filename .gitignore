@@ -12,6 +12,10 @@ dist/
 build/
 *.tsbuildinfo
 
+# Archivos subidos en desarrollo (fotos públicas y documentos privados)
+apps/api/uploads/
+apps/api/private/
+
 # SQLite databases
 *.sqlite
 *.sqlite3

@@ -72,6 +72,13 @@ export class AuthService {
     return this.http.post<{ phoneVerificationCode?: string }>(`${this.apiUrl}/resend-phone`, {});
   }
 
+  /** Sube una foto de la licencia y devuelve la clave para submitIdentity. */
+  uploadIdentityDocument(file: Blob): Observable<{ key: string }> {
+    const body = new FormData();
+    body.append('file', file, 'licencia.jpg');
+    return this.http.post<{ key: string }>(`${this.apiUrl}/identity-documents`, body);
+  }
+
   submitIdentity(data: { dni: string; licenseNumber: string; licenseFrontImage: string; licenseBackImage: string }): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/verify-identity`, data);
   }

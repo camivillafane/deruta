@@ -69,6 +69,18 @@ docker kill --signal=HUP ahora-lo-reviso-nginx-1   # recarga y pide el certifica
 docker logs --tail 50 ahora-lo-reviso-nginx-1
 ```
 
+## Verificación de identidad
+
+Las fotos de la licencia se guardan en el volumen `identity_docs` (privado: no se sirven por `/uploads`). Cada solicitud queda **pendiente** hasta que un admin la aprueba en `/admin/verificaciones`.
+
+Para hacer admin a una cuenta (una sola vez):
+
+```bash
+docker exec -it deruta-db psql -U deruta deruta -c "UPDATE users SET role = 'admin' WHERE email = 'tu@email.com';"
+```
+
+Incluí `identity_docs` en los backups (`docker run --rm -v deruta_identity_docs:/d -v $PWD:/b alpine tar czf /b/identity-$(date +%F).tgz -C /d .`).
+
 ## Operación diaria
 
 | Qué | Cómo |

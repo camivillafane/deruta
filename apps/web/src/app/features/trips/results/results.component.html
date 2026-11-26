@@ -5,6 +5,11 @@
 
     @if (loading) {
       <div class="loading-state">Buscando viajes...</div>
+    } @else if (errorMessage) {
+      <div class="error-state" role="alert">
+        <p>{{ errorMessage }}</p>
+        <app-button variant="secondary" (clicked)="search()">Reintentar</app-button>
+      </div>
     } @else if (trips.length === 0) {
       <app-empty-state
         icon="🛣️"

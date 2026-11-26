@@ -45,6 +45,9 @@ export class User {
   @Column({ nullable: true, type: 'varchar', select: false })
   emailVerificationCode?: string;
 
+  @Column({ type: 'int', default: 0, select: false })
+  emailVerificationAttempts?: number;
+
   @Column({ nullable: true, type: Date })
   emailVerificationExpiresAt?: Date;
 
@@ -53,6 +56,9 @@ export class User {
 
   @Column({ nullable: true, type: 'varchar', select: false })
   phoneVerificationCode?: string;
+
+  @Column({ type: 'int', default: 0, select: false })
+  phoneVerificationAttempts?: number;
 
   @Column({ nullable: true, type: Date })
   phoneVerificationExpiresAt?: Date;

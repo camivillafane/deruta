@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
@@ -10,17 +11,20 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
   }
 
   @Post('refresh')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @HttpCode(HttpStatus.OK)
   refresh(@Body() dto: RefreshTokenDto) {
     return this.authService.refresh(dto.refreshToken);
@@ -34,6 +38,7 @@ export class AuthController {
   }
 
   @Post('verify-email')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   verifyEmail(@CurrentUser('userId') userId: string, @Body() dto: VerifyCodeDto) {
@@ -41,6 +46,7 @@ export class AuthController {
   }
 
   @Post('resend-email')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   resendEmail(@CurrentUser('userId') userId: string) {
@@ -48,6 +54,7 @@ export class AuthController {
   }
 
   @Post('verify-phone')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   verifyPhone(@CurrentUser('userId') userId: string, @Body() dto: VerifyCodeDto) {
@@ -55,6 +62,7 @@ export class AuthController {
   }
 
   @Post('resend-phone')
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   resendPhone(@CurrentUser('userId') userId: string) {

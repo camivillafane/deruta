@@ -13,10 +13,17 @@ import { VerifyCodeDto, VerifyIdentityDto } from './dto/verification.dto.js';
 import { EmailServiceFactory } from '../common/services/email.service.js';
 import { SmsServiceFactory } from '../common/services/sms.service.js';
 
+export type TokenType = 'access' | 'refresh';
+
 export interface TokenPayload {
   sub: string;
   email: string;
+  /** Tipo de token: un refresh token no sirve para llamar a la API, y viceversa. */
+  typ?: TokenType;
 }
+
+/** Intentos fallidos permitidos por código de verificación antes de invalidarlo. */
+export const MAX_VERIFICATION_ATTEMPTS = 5;
 
 export type PublicUser = Omit<
   User,
@@ -24,6 +31,8 @@ export type PublicUser = Omit<
   | 'refreshTokenHash'
   | 'emailVerificationCode'
   | 'phoneVerificationCode'
+  | 'emailVerificationAttempts'
+  | 'phoneVerificationAttempts'
 >;
 
 export interface AuthResponse {
@@ -79,13 +88,24 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string): Promise<AuthResponse> {
-    const payload = await this.jwtService.verifyAsync<TokenPayload>(refreshToken, {
-      secret: this.configService.get<string>('JWT_SECRET'),
-    });
-
-    const user = await this.usersService.findByIdWithCredentials(payload.sub);
-    if (!user.refreshTokenHash) {
+    let payload: TokenPayload;
+    try {
+      payload = await this.jwtService.verifyAsync<TokenPayload>(refreshToken, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+    } catch {
       throw new UnauthorizedException('Sesión inválida');
+    }
+    if (payload.typ !== 'refresh') {
+      throw new UnauthorizedException('Sesión inválida');
+    }
+
+    const user = await this.usersService.findByIdWithCredentials(payload.sub).catch(() => null);
+    if (!user?.refreshTokenHash) {
+      throw new UnauthorizedException('Sesión inválida');
+    }
+    if (user.isBlocked) {
+      throw new UnauthorizedException(user.blockedReason || 'Tu cuenta ha sido bloqueada. Contactá al soporte.');
     }
 
     const valid = await compare(refreshToken, user.refreshTokenHash);
@@ -106,6 +126,8 @@ export class AuthService {
       refreshTokenHash,
       emailVerificationCode,
       phoneVerificationCode,
+      emailVerificationAttempts,
+      phoneVerificationAttempts,
       ...publicUser
     } = user;
     return publicUser;
@@ -113,10 +135,10 @@ export class AuthService {
 
   private async generateTokens(user: User): Promise<AuthResponse> {
     const payload: TokenPayload = { sub: user.id, email: user.email };
-    const accessToken = this.jwtService.sign(payload, {
+    const accessToken = this.jwtService.sign({ ...payload, typ: 'access' }, {
       expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION', '15m') as JwtSignOptions['expiresIn'],
     });
-    const refreshToken = this.jwtService.sign(payload, {
+    const refreshToken = this.jwtService.sign({ ...payload, typ: 'refresh' }, {
       expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRATION', '7d') as JwtSignOptions['expiresIn'],
     });
 
@@ -141,7 +163,11 @@ export class AuthService {
     if (user.emailVerified) {
       return;
     }
-    if (!user.emailVerificationCode || user.emailVerificationCode !== dto.code) {
+    if (!user.emailVerificationCode) {
+      throw new UnauthorizedException('Pedí un código nuevo');
+    }
+    if (user.emailVerificationCode !== dto.code) {
+      await this.registerFailedAttempt(userId, 'email', user.emailVerificationAttempts ?? 0);
       throw new UnauthorizedException('Código incorrecto');
     }
     if (user.emailVerificationExpiresAt && new Date() > new Date(user.emailVerificationExpiresAt)) {
@@ -160,6 +186,7 @@ export class AuthService {
     await this.usersService.setVerificationCodes(userId, {
       emailVerificationCode: code,
       emailVerificationExpiresAt: expiresAt,
+      emailVerificationAttempts: 0,
     });
     await this.sendVerificationCodes(user.email, undefined, {
       emailVerificationCode: code,
@@ -172,7 +199,11 @@ export class AuthService {
     if (user.phoneVerified) {
       return;
     }
-    if (!user.phoneVerificationCode || user.phoneVerificationCode !== dto.code) {
+    if (!user.phoneVerificationCode) {
+      throw new UnauthorizedException('Pedí un código nuevo');
+    }
+    if (user.phoneVerificationCode !== dto.code) {
+      await this.registerFailedAttempt(userId, 'phone', user.phoneVerificationAttempts ?? 0);
       throw new UnauthorizedException('Código incorrecto');
     }
     if (user.phoneVerificationExpiresAt && new Date() > new Date(user.phoneVerificationExpiresAt)) {
@@ -191,6 +222,7 @@ export class AuthService {
     await this.usersService.setVerificationCodes(userId, {
       phoneVerificationCode: code,
       phoneVerificationExpiresAt: expiresAt,
+      phoneVerificationAttempts: 0,
     });
     await this.sendVerificationCodes(undefined, user.phone, {
       phoneVerificationCode: code,
@@ -206,12 +238,35 @@ export class AuthService {
     }
   }
 
+  /**
+   * Cuenta un intento fallido. Al llegar al máximo invalida el código, así no se
+   * pueden probar los 6 dígitos por fuerza bruta: hay que pedir uno nuevo.
+   */
+  private async registerFailedAttempt(userId: string, channel: 'email' | 'phone', previous: number): Promise<void> {
+    const attempts = previous + 1;
+    if (attempts >= MAX_VERIFICATION_ATTEMPTS) {
+      await this.usersService.setVerificationCodes(
+        userId,
+        channel === 'email'
+          ? { emailVerificationCode: null, emailVerificationAttempts: 0 }
+          : { phoneVerificationCode: null, phoneVerificationAttempts: 0 },
+      );
+      throw new UnauthorizedException('Demasiados intentos. Pedí un código nuevo.');
+    }
+    await this.usersService.setVerificationCodes(
+      userId,
+      channel === 'email' ? { emailVerificationAttempts: attempts } : { phoneVerificationAttempts: attempts },
+    );
+  }
+
   private generateVerificationCodes() {
     return {
       emailVerificationCode: this.generateCode(),
       emailVerificationExpiresAt: this.expiresAt(),
+      emailVerificationAttempts: 0,
       phoneVerificationCode: this.generateCode(),
       phoneVerificationExpiresAt: this.expiresAt(),
+      phoneVerificationAttempts: 0,
     };
   }
 

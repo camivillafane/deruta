@@ -20,10 +20,12 @@ export interface UpdateUserData {
 }
 
 export interface VerificationCodes {
-  emailVerificationCode?: string;
+  emailVerificationCode?: string | null;
   emailVerificationExpiresAt?: Date;
-  phoneVerificationCode?: string;
+  emailVerificationAttempts?: number;
+  phoneVerificationCode?: string | null;
   phoneVerificationExpiresAt?: Date;
+  phoneVerificationAttempts?: number;
 }
 
 export interface IdentityData {
@@ -31,6 +33,11 @@ export interface IdentityData {
   licenseNumber: string;
   licenseFrontImage: string;
   licenseBackImage: string;
+}
+
+/** Emails sin espacios y en minúsculas: Martin@x.com y martin@x.com son la misma cuenta. */
+export function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
 }
 
 @Injectable()
@@ -41,6 +48,7 @@ export class UsersService {
   ) {}
 
   async create(data: CreateUserData): Promise<User> {
+    data = { ...data, email: normalizeEmail(data.email) };
     const existing = await this.findByEmail(data.email);
     if (existing) {
       throw new ConflictException('El email ya está registrado');
@@ -50,7 +58,11 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { email } });
+    // LOWER() para encontrar también cuentas viejas guardadas con mayúsculas.
+    return this.userRepository
+      .createQueryBuilder('user')
+      .where('LOWER(user.email) = :email', { email: normalizeEmail(email) })
+      .getOne();
   }
 
   async findByEmailWithCredentials(email: string): Promise<User | null> {
@@ -58,7 +70,7 @@ export class UsersService {
       .createQueryBuilder('user')
       .addSelect('user.passwordHash')
       .addSelect('user.refreshTokenHash')
-      .where('user.email = :email', { email })
+      .where('LOWER(user.email) = :email', { email: normalizeEmail(email) })
       .getOne();
   }
 
@@ -77,6 +89,8 @@ export class UsersService {
       .addSelect('user.refreshTokenHash')
       .addSelect('user.emailVerificationCode')
       .addSelect('user.phoneVerificationCode')
+      .addSelect('user.emailVerificationAttempts')
+      .addSelect('user.phoneVerificationAttempts')
       .where('user.id = :id', { id })
       .getOne();
     if (!user) {
@@ -87,12 +101,18 @@ export class UsersService {
 
   async update(id: string, data: UpdateUserData): Promise<User> {
     const user = await this.findById(id);
+    // Un teléfono nuevo hay que volver a verificarlo.
+    if (data.phone !== undefined && data.phone !== user.phone) {
+      user.phoneVerified = false;
+    }
     Object.assign(user, data);
     return this.userRepository.save(user);
   }
 
   async setRefreshTokenHash(id: string, refreshTokenHash: string | null): Promise<void> {
-    await this.userRepository.update(id, { refreshTokenHash: refreshTokenHash || undefined });
+    // null (no undefined): con undefined TypeORM no tocaba la columna y el logout
+    // no invalidaba el refresh token.
+    await this.userRepository.update(id, { refreshTokenHash: refreshTokenHash as string });
   }
 
   async updateRating(userId: string): Promise<void> {
@@ -114,7 +134,7 @@ export class UsersService {
   }
 
   async setVerificationCodes(id: string, codes: VerificationCodes): Promise<void> {
-    await this.userRepository.update(id, codes);
+    await this.userRepository.update(id, codes as Partial<User>);
   }
 
   async verifyEmail(id: string): Promise<void> {

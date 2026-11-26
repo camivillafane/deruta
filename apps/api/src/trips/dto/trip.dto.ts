@@ -138,8 +138,4 @@ export class UpdateTripDto {
   @IsOptional()
   @IsString()
   notes?: string;
-
-  @IsOptional()
-  @IsString()
-  status?: string;
 }

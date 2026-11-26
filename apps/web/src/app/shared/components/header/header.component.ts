@@ -22,14 +22,16 @@ import { ButtonComponent } from '../button/button.component';
           <a routerLink="/necesito-viajar" routerLinkActive="active">Necesito viajar</a>
         </nav>
 
-        <div class="app-header__actions">
+        <div class="app-header__actions" [class.app-header__actions--guest]="!auth.isAuthenticated()">
           @if (auth.isAuthenticated()) {
             <a routerLink="/mis-viajes" routerLinkActive="active">Mis viajes</a>
             <a routerLink="/mensajes" routerLinkActive="active">Mensajes</a>
             <a routerLink="/perfil" routerLinkActive="active">Perfil</a>
           } @else {
-            <app-button variant="ghost" routerLink="/login">Iniciar sesión</app-button>
-            <app-button variant="primary" routerLink="/registro">Registrarme</app-button>
+            <!-- Visibles también en mobile: sin sesión no hay barra inferior, y este es
+                 el único acceso a login/registro. -->
+            <app-button variant="ghost" size="sm" routerLink="/login">Ingresar</app-button>
+            <app-button variant="primary" size="sm" routerLink="/registro">Registrarme</app-button>
           }
         </div>
       </div>

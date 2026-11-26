@@ -1,0 +1,40 @@
+name: PR checks
+
+# Corre tests y build en cada PR (y en pushes a ramas que no son main),
+# así un PR roto se ve antes de mergear y no recién en el deploy.
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pr-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Angular 22 pide Node >= 22.22 o >= 24.15 (igual que el deploy).
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Test API
+        run: npm run test:api
+
+      - name: Test web
+        working-directory: apps/web
+        run: npx ng test --watch=false
+
+      - name: Build
+        run: npm run build

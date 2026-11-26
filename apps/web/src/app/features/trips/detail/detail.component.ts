@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -15,6 +15,9 @@ import { InputComponent } from '../../../shared/components/input/input.component
 import { ToastService } from '../../../shared/components/toast/toast.service';
 
 @Component({
+  // Angular 22 usa OnPush por defecto; este componente actualiza estado común
+  // (no signals) dentro de subscribe, así que necesita Eager para refrescar la vista.
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-trip-detail',
   standalone: true,
   imports: [CommonModule, RouterModule, ReactiveFormsModule, CardComponent, ButtonComponent, BadgeComponent, RatingComponent, AvatarComponent, InputComponent],

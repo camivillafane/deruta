@@ -29,7 +29,14 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: space-between;
+    // Separación mínima entre el título y el botón: sin gap, en mobile el botón
+    // quedaba pegado al texto (space-between solo separa cuando sobra alto).
+    gap: 24px;
     padding-bottom: 32px;
+
+    @media (min-width: 768px) {
+      gap: 32px;
+    }
   }
 
   &__title {

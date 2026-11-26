@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AdminService } from '../../core/services/admin.service';
@@ -9,6 +9,9 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { ToastService } from '../../shared/components/toast/toast.service';
 
 @Component({
+  // Angular 22 usa OnPush por defecto; este componente actualiza estado común
+  // (no signals) dentro de subscribe, así que necesita Eager para refrescar la vista.
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-admin-verifications',
   standalone: true,
   imports: [CommonModule, RouterModule, CardComponent, ButtonComponent, EmptyStateComponent],

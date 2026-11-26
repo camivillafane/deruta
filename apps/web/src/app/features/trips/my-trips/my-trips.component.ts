@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { TripsService } from '@core/services/trips.service';
@@ -13,6 +13,9 @@ import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.
 import { RatingModalComponent, RatingSubmitData } from '@shared/components/rating-modal/rating-modal.component';
 
 @Component({
+  // Angular 22 usa OnPush por defecto; este componente actualiza estado común
+  // (no signals) dentro de subscribe, así que necesita Eager para refrescar la vista.
+  changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-my-trips',
   standalone: true,
   imports: [CommonModule, RouterModule, CardComponent, ButtonComponent, BadgeComponent, EmptyStateComponent, RatingModalComponent],

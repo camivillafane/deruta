@@ -38,7 +38,9 @@ EOF
 )
 ```
 
-## Proxy (una sola vez)
+## Proxy (una sola vez, y cada vez que cambie `proxy/deruta.conf`)
+
+El bloque incluye `/api/`, `/socket.io/` (chat en tiempo real), `/uploads/` y los headers de seguridad.
 
 ```bash
 cp deploy/proxy/deruta.conf /opt/kioapp-develop/proxy/

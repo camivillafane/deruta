@@ -17,6 +17,26 @@ internet ──443──▶ ahora-lo-reviso-nginx-1 (jonasal/nginx-certbot, comp
 - **Proxy:** `proxy/deruta.conf` se instala a mano en `/opt/kioapp-develop/proxy/` (la carpeta que el proxy tiene montada en `/etc/nginx/user_conf.d`). El deploy no lo toca: un error ahí deja sin servicio a todas las apps.
 - **Node 24 en CI:** Angular 22 pide Node ≥ 22.22. El `package-lock.json` se regeneró con npm 11 para que incluya los binarios nativos de Linux (rolldown); si se vuelve a generar en Windows/macOS con npm viejo, el build de CI falla con *Cannot find native binding*.
 
+## Emails y SMS reales
+
+Sin esto los códigos de verificación solo se imprimen en `docker logs deruta-api` y **nadie puede verificar su cuenta** (y sin verificar no se puede publicar un viaje). Agregar al `.env` del servidor y volver a desplegar:
+
+```bash
+# Email con Resend (https://resend.com). EMAIL_FROM tiene que ser de un dominio verificado en Resend
+# (no sirve duckdns: hace falta un dominio propio con los registros DNS que pide Resend).
+EMAIL_PROVIDER=resend
+RESEND_API_KEY=re_xxxxxxxx
+EMAIL_FROM="DE RUTA <hola@tudominio.com.ar>"
+
+# SMS con Twilio (opcional; sin esto la verificación de teléfono no llega).
+SMS_PROVIDER=twilio
+TWILIO_ACCOUNT_SID=ACxxxxxxxx
+TWILIO_AUTH_TOKEN=xxxxxxxx
+TWILIO_PHONE_NUMBER=+1xxxxxxxxxx
+```
+
+Al arrancar, la API avisa en el log si en producción sigue con `console`.
+
 ## Secrets de GitHub
 
 | Secret | Valor |

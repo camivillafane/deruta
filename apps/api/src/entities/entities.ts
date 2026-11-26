@@ -8,6 +8,11 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
+// Fechas con hora: usar `type: Date` (o dejar que TypeORM lo infiera del tipo `Date`).
+// TypeORM lo traduce a `timestamp without time zone` en Postgres (producción), igual que
+// @CreateDateColumn/@UpdateDateColumn, y a `datetime` en SQLite (desarrollo).
+// No usar 'datetime' (Postgres no lo soporta) ni 'timestamp'/'timestamptz' (SQLite no los soporta).
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -40,7 +45,7 @@ export class User {
   @Column({ nullable: true, type: 'varchar', select: false })
   emailVerificationCode?: string;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: Date })
   emailVerificationExpiresAt?: Date;
 
   @Column({ default: false })
@@ -49,7 +54,7 @@ export class User {
   @Column({ nullable: true, type: 'varchar', select: false })
   phoneVerificationCode?: string;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: Date })
   phoneVerificationExpiresAt?: Date;
 
   @Column({ nullable: true })
@@ -67,10 +72,10 @@ export class User {
   @Column({ default: false })
   identityVerified: boolean;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: Date })
   identitySubmittedAt?: Date;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: Date })
   identityVerifiedAt?: Date;
 
   @Column({ type: 'decimal', precision: 2, scale: 1, default: 0 })
@@ -91,7 +96,7 @@ export class User {
   @Column({ nullable: true, type: 'text' })
   blockedReason?: string;
 
-  @Column({ nullable: true, type: 'datetime' })
+  @Column({ nullable: true, type: Date })
   blockedAt?: Date;
 
   @CreateDateColumn()

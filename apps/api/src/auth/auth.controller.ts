@@ -4,6 +4,9 @@ import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { LoginDto, RefreshTokenDto, RegisterDto } from './dto/auth.dto.js';
 import { VerifyCodeDto, VerifyIdentityDto } from './dto/verification.dto.js';
+import { BadRequestException, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { MAX_IDENTITY_DOCUMENT_BYTES } from '../common/services/identity-documents.service.js';
 
 @Controller('auth')
 export class AuthController {
@@ -59,6 +62,17 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   resendPhone(@CurrentUser('userId') userId: string) {
     return this.authService.resendPhoneVerification(userId);
+  }
+
+  /** Sube UNA foto de la licencia (campo multipart 'file') y devuelve su clave. */
+  @Post('identity-documents')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_IDENTITY_DOCUMENT_BYTES, files: 1 } }))
+  async uploadIdentityDocument(@UploadedFile() file?: { buffer: Buffer }) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Falta la foto');
+    }
+    return { key: await this.authService.uploadIdentityDocument(file.buffer) };
   }
 
   @Post('verify-identity')

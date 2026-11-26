@@ -14,7 +14,8 @@ COPY source/apps/api/dist apps/api/dist
 
 # Carpeta de imágenes subidas (STORAGE_PROVIDER=local). Se crea con dueño node para que
 # el volumen nombrado herede los permisos y la API (que corre como node) pueda escribir.
-RUN mkdir -p /app/apps/api/uploads && chown node:node /app/apps/api/uploads
+RUN mkdir -p /app/apps/api/uploads /app/apps/api/private/identity \
+ && chown -R node:node /app/apps/api/uploads /app/apps/api/private
 
 ENV NODE_ENV=production
 WORKDIR /app/apps/api

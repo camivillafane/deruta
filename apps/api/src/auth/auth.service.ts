@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import { LoginDto, RegisterDto } from './dto/auth.dto.js';
 import { VerifyCodeDto, VerifyIdentityDto } from './dto/verification.dto.js';
 import { EmailServiceFactory } from '../common/services/email.service.js';
 import { SmsServiceFactory } from '../common/services/sms.service.js';
+import { IdentityDocumentsService } from '../common/services/identity-documents.service.js';
 
 export interface TokenPayload {
   sub: string;
@@ -40,6 +42,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly emailServiceFactory: EmailServiceFactory,
     private readonly smsServiceFactory: SmsServiceFactory,
+    private readonly identityDocuments: IdentityDocumentsService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
@@ -198,10 +201,26 @@ export class AuthService {
     });
   }
 
+  uploadIdentityDocument(buffer: Buffer): Promise<string> {
+    return this.identityDocuments.save(buffer);
+  }
+
+  /**
+   * Guarda DNI, licencia y las fotos subidas, y deja la identidad PENDIENTE de
+   * revisión manual en /admin/verificaciones. Antes se aprobaba sola cuando
+   * STORAGE_PROVIDER=local (el default en producción): cualquiera quedaba
+   * verificado pegando cualquier link.
+   */
   async submitIdentity(userId: string, dto: VerifyIdentityDto): Promise<void> {
+    for (const key of [dto.licenseFrontImage, dto.licenseBackImage]) {
+      if (!(await this.identityDocuments.exists(key))) {
+        throw new BadRequestException('No encontramos una de las fotos. Subila de nuevo.');
+      }
+    }
     await this.usersService.submitIdentity(userId, dto);
-    const storageProvider = this.configService.get<string>('STORAGE_PROVIDER', 'local');
-    if (storageProvider === 'local') {
+
+    // Solo para desarrollo/demos: aprobar sin revisión si se pide explícitamente.
+    if (this.configService.get<string>('IDENTITY_AUTO_APPROVE') === 'true') {
       await this.usersService.approveIdentity(userId);
     }
   }

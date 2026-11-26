@@ -23,12 +23,8 @@
                 <p>DNI: {{ user.dni }} · Licencia: {{ user.licenseNumber }}</p>
               </div>
               <div class="verification-card__docs">
-                <a [href]="user.licenseFrontImage" target="_blank" rel="noopener">
-                  <img [src]="user.licenseFrontImage" alt="Frente licencia" />
-                </a>
-                <a [href]="user.licenseBackImage" target="_blank" rel="noopener">
-                  <img [src]="user.licenseBackImage" alt="Dorso licencia" />
-                </a>
+                <app-identity-doc [userId]="user.id" side="front" [stored]="user.licenseFrontImage" label="frente de la licencia" />
+                <app-identity-doc [userId]="user.id" side="back" [stored]="user.licenseBackImage" label="dorso de la licencia" />
               </div>
               <div class="verification-card__actions">
                 <app-button variant="primary" size="sm" (clicked)="approve(user)">Aprobar</app-button>

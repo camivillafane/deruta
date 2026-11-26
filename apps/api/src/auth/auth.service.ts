@@ -13,6 +13,7 @@ import { LoginDto, RegisterDto } from './dto/auth.dto.js';
 import { VerifyCodeDto, VerifyIdentityDto } from './dto/verification.dto.js';
 import { EmailServiceFactory } from '../common/services/email.service.js';
 import { SmsServiceFactory } from '../common/services/sms.service.js';
+import { normalizeArgentinePhone } from '../common/utils/phone.js';
 import { IdentityDocumentsService } from '../common/services/identity-documents.service.js';
 
 export type TokenType = 'access' | 'refresh';
@@ -271,8 +272,18 @@ export class AuthService {
 
   async resendPhoneVerification(userId: string): Promise<void> {
     const user = await this.usersService.findById(userId);
-    if (user.phoneVerified || !user.phone) {
+    if (user.phoneVerified) {
       return;
+    }
+    // Cuentas creadas antes de validar el formato: se corrige si se puede; si no,
+    // se pide actualizarlo (Twilio rechaza números sin +549).
+    const phone = normalizeArgentinePhone(user.phone);
+    if (!phone) {
+      throw new BadRequestException('Tu teléfono no es válido. Actualizalo en tu perfil (por ejemplo 351 123 4567).');
+    }
+    if (phone !== user.phone) {
+      await this.usersService.update(userId, { phone });
+      user.phone = phone;
     }
     const code = this.generateCode();
     const expiresAt = this.expiresAt();

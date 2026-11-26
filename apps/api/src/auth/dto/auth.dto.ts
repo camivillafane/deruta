@@ -8,6 +8,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { IsArgentinePhone } from '../../common/validators/phone.validators.js';
 
 const toNormalizedEmail = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim().toLowerCase() : value;
@@ -33,10 +34,11 @@ export class RegisterDto {
   @MaxLength(72) // bcrypt ignora lo que pase de 72 bytes
   password: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
-  phone?: string;
+  // Obligatorio: sin teléfono verificado no se puede publicar un viaje.
+  @IsString({ message: 'El teléfono es obligatorio' })
+  @IsNotEmpty({ message: 'El teléfono es obligatorio' })
+  @IsArgentinePhone()
+  phone: string;
 }
 
 export class LoginDto {

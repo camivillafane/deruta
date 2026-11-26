@@ -27,6 +27,16 @@ async function bootstrap() {
     transformOptions: { enableImplicitConversion: true },
   }));
 
+  if (process.env.NODE_ENV === 'production') {
+    for (const [key, label] of [['EMAIL_PROVIDER', 'emails'], ['SMS_PROVIDER', 'SMS']] as const) {
+      if (configService.get(key, 'console') === 'console') {
+        console.warn(
+          `[config] ${key}=console en producción: los ${label} solo se imprimen en el log y nadie los recibe.`,
+        );
+      }
+    }
+  }
+
   const port = configService.get('API_PORT', 3000);
   await app.listen(port);
   console.log(`API running on http://localhost:${port}/${configService.get('API_PREFIX', 'api/v1')}`);

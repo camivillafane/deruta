@@ -36,6 +36,17 @@ services:
       API_PREFIX: api/v1
       API_CORS_ORIGIN: ${WEB_URL:-https://deruta.duckdns.org}
       WEB_URL: ${WEB_URL:-https://deruta.duckdns.org}
+      # Emails (códigos de verificación, avisos, recuperar contraseña).
+      # Con EMAIL_PROVIDER=console los mails solo se imprimen en el log: nadie los recibe.
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
+      EMAIL_FROM: ${EMAIL_FROM:-DE RUTA <noreply@deruta.app>}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      # SMS (verificación de teléfono). Con console, igual que el email.
+      SMS_PROVIDER: ${SMS_PROVIDER:-console}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:-}
       DB_HOST: deruta-db
       DB_PORT: "5432"
       DB_USER: deruta

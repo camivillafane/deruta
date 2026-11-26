@@ -55,7 +55,13 @@ export class AuthService {
     const codes = this.generateVerificationCodes();
     await this.usersService.setVerificationCodes(user.id, codes);
 
-    await this.sendVerificationCodes(user.email, user.phone, codes);
+    // La cuenta ya está creada: si el proveedor de email/SMS falla, no devolver error
+    // (la persona puede pedir el código de nuevo desde la pantalla de verificación).
+    try {
+      await this.sendVerificationCodes(user.email, user.phone, codes);
+    } catch (error) {
+      console.error('No se pudieron enviar los códigos de verificación:', error);
+    }
 
     return this.generateTokens(user);
   }

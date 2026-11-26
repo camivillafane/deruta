@@ -5,11 +5,14 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ConversationsService } from './conversations.service.js';
 
+// El rate limit HTTP (ThrottlerGuard global) no aplica a los eventos del socket.
+@SkipThrottle()
 @WebSocketGateway({
   namespace: 'chat',
   cors: {
@@ -37,6 +40,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
+      if (payload.typ !== 'access') {
+        client.disconnect();
+        return;
+      }
       client.data.userId = payload.sub;
     } catch {
       client.disconnect();

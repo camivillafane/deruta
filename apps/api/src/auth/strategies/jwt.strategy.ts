@@ -19,7 +19,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: TokenPayload) {
-    if (!payload.sub) {
+    // Solo access tokens: un refresh token (7 días) no da acceso a la API.
+    if (!payload.sub || payload.typ !== 'access') {
       throw new UnauthorizedException();
     }
     const user = await this.usersService.findById(payload.sub);

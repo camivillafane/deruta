@@ -6,6 +6,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { InputComponent } from '../../../shared/components/input/input.component';
 import { CardComponent } from '../../../shared/components/card/card.component';
+import { PhotoUploadComponent } from '../../../shared/components/photo-upload/photo-upload.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 
 @Component({
@@ -14,7 +15,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-verification',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ButtonComponent, InputComponent, CardComponent],
+  imports: [CommonModule, ReactiveFormsModule, ButtonComponent, InputComponent, CardComponent, PhotoUploadComponent],
   templateUrl: './verification.component.html',
   styleUrl: './verification.component.scss',
 })
@@ -35,7 +36,7 @@ export class VerificationComponent implements OnInit {
     this.emailForm = this.fb.group({ code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]] });
     this.phoneForm = this.fb.group({ code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]] });
     this.identityForm = this.fb.group({
-      dni: ['', [Validators.required, Validators.minLength(7), Validators.maxLength(8)]],
+      dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
       licenseNumber: ['', [Validators.required, Validators.minLength(5)]],
       licenseFrontImage: ['', Validators.required],
       licenseBackImage: ['', Validators.required],
@@ -97,8 +98,19 @@ export class VerificationComponent implements OnInit {
     });
   }
 
+  /** Se pasa a <app-photo-upload>; arrow function para conservar `this`. */
+  readonly uploadDocument = (file: Blob) => this.authService.uploadIdentityDocument(file);
+
+  setDocument(control: 'licenseFrontImage' | 'licenseBackImage', key: string): void {
+    this.identityForm.get(control)?.setValue(key);
+    this.identityForm.get(control)?.markAsTouched();
+  }
+
   submitIdentity(): void {
-    if (this.identityForm.invalid) return;
+    if (this.identityForm.invalid) {
+      this.identityForm.markAllAsTouched();
+      return;
+    }
     this.loading = true;
     this.authService.submitIdentity(this.identityForm.value).subscribe({
       next: () => {
@@ -150,9 +162,13 @@ export class VerificationComponent implements OnInit {
   getError(form: FormGroup, controlName: string): string {
     const control = form.get(controlName);
     if (control?.invalid && (control.dirty || control.touched)) {
-      if (control.errors?.['required']) return 'Este campo es obligatorio';
+      if (control.errors?.['required']) {
+        return controlName.startsWith('license') && controlName.endsWith('Image')
+          ? 'Subí la foto'
+          : 'Este campo es obligatorio';
+      }
+      if (controlName === 'dni' && control.errors?.['pattern']) return 'Tiene que tener 7 u 8 números, sin puntos';
       if (control.errors?.['minlength'] || control.errors?.['maxlength']) return 'Debe tener 6 dígitos';
-      if (controlName === 'dni' && (control.errors?.['minlength'] || control.errors?.['maxlength'])) return 'DNI inválido';
     }
     return '';
   }

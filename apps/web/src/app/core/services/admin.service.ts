@@ -16,6 +16,10 @@ export class AdminService {
     return this.http.get<User[]>(`${this.apiUrl}/verifications/pending`);
   }
 
+  getIdentityDocument(userId: string, side: 'front' | 'back'): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/verifications/${userId}/documents/${side}`, { responseType: 'blob' });
+  }
+
   approveIdentity(userId: string): Observable<User> {
     return this.http.patch<User>(`${this.apiUrl}/verifications/${userId}/approve`, {});
   }

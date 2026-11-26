@@ -62,10 +62,23 @@
                 </div>
               </div>
               <form [formGroup]="identityForm" (ngSubmit)="submitIdentity()" class="auth-form">
-                <app-input formControlName="dni" label="DNI" placeholder="12345678" id="dni" [error]="getError(identityForm, 'dni')" />
+                <app-input formControlName="dni" label="DNI (sin puntos)" placeholder="12345678" id="dni" [error]="getError(identityForm, 'dni')" />
                 <app-input formControlName="licenseNumber" label="Número de licencia" placeholder="A123456789" id="licenseNumber" [error]="getError(identityForm, 'licenseNumber')" />
-                <app-input formControlName="licenseFrontImage" label="Foto frontal de la licencia (URL)" placeholder="https://..." id="licenseFrontImage" [error]="getError(identityForm, 'licenseFrontImage')" />
-                <app-input formControlName="licenseBackImage" label="Foto dorso de la licencia (URL)" placeholder="https://..." id="licenseBackImage" [error]="getError(identityForm, 'licenseBackImage')" />
+                <app-photo-upload
+                  label="Foto del frente de la licencia"
+                  id="licenseFrontImage"
+                  [upload]="uploadDocument"
+                  [error]="getError(identityForm, 'licenseFrontImage')"
+                  (uploaded)="setDocument('licenseFrontImage', $event)"
+                />
+                <app-photo-upload
+                  label="Foto del dorso de la licencia"
+                  id="licenseBackImage"
+                  [upload]="uploadDocument"
+                  [error]="getError(identityForm, 'licenseBackImage')"
+                  (uploaded)="setDocument('licenseBackImage', $event)"
+                />
+                <p class="privacy-note">Las fotos solo las ve el equipo de DE RUTA para verificar tu identidad.</p>
                 <app-button type="submit" variant="primary" [fullWidth]="true" [loading]="loading">Enviar documentación</app-button>
               </form>
             </div>

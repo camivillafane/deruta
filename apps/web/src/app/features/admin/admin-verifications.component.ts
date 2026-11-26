@@ -7,6 +7,7 @@ import { CardComponent } from '../../shared/components/card/card.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { ToastService } from '../../shared/components/toast/toast.service';
+import { IdentityDocComponent } from './identity-doc/identity-doc.component';
 
 @Component({
   // Angular 22 usa OnPush por defecto; este componente actualiza estado común
@@ -14,7 +15,7 @@ import { ToastService } from '../../shared/components/toast/toast.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   selector: 'app-admin-verifications',
   standalone: true,
-  imports: [CommonModule, RouterModule, CardComponent, ButtonComponent, EmptyStateComponent],
+  imports: [CommonModule, RouterModule, CardComponent, ButtonComponent, EmptyStateComponent, IdentityDocComponent],
   templateUrl: './admin-verifications.component.html',
   styleUrl: './admin-verifications.component.scss',
 })

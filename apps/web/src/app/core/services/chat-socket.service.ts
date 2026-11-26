@@ -17,9 +17,10 @@ export class ChatSocketService {
       return this.socket;
     }
 
-    const token = this.authService.getToken();
     this.socket = io(`${this.socketOrigin()}/chat`, {
-      auth: { token },
+      // Función y no objeto: en cada reconexión toma el token vigente
+      // (el access token se renueva cada 15 minutos).
+      auth: (cb) => cb({ token: this.authService.getToken() }),
       transports: ['websocket', 'polling'],
     });
 

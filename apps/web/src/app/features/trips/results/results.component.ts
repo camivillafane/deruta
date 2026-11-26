@@ -20,6 +20,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 export class ResultsComponent implements OnInit {
   trips: Trip[] = [];
   loading = true;
+  errorMessage = '';
   origin = '';
   destination = '';
   departureDate = '';
@@ -48,6 +49,7 @@ export class ResultsComponent implements OnInit {
 
   search(): void {
     this.loading = true;
+    this.errorMessage = '';
     this.tripsService
       .search({
         origin: this.origin,
@@ -65,8 +67,14 @@ export class ResultsComponent implements OnInit {
           this.limit = response.limit;
           this.loading = false;
         },
-        error: () => {
+        error: (err) => {
           this.loading = false;
+          this.trips = [];
+          this.total = 0;
+          const message = err?.error?.message;
+          this.errorMessage = Array.isArray(message)
+            ? message.join('. ')
+            : message || 'No pudimos buscar viajes. Revisá tu conexión e intentá de nuevo.';
         },
       });
   }

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, finalize, map, shareReplay, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, User } from '../models';
 
@@ -72,6 +72,30 @@ export class AuthService {
     return this.http.get<User>(`${this.apiUrl}/verification-status`).pipe(
       tap((user) => this.updateStoredUser(user)),
     );
+  }
+
+  private refreshInFlight$: Observable<string> | null = null;
+
+  /**
+   * Renueva el access token con el refresh token guardado y devuelve el nuevo.
+   * Si varios pedidos fallan a la vez con 401, comparten una sola renovación.
+   */
+  refreshSession(): Observable<string> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      return throwError(() => new Error('Sin refresh token'));
+    }
+    if (!this.refreshInFlight$) {
+      this.refreshInFlight$ = this.http
+        .post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken })
+        .pipe(
+          tap((response) => this.setSession(response)),
+          map((response) => response.accessToken),
+          finalize(() => (this.refreshInFlight$ = null)),
+          shareReplay({ bufferSize: 1, refCount: false }),
+        );
+    }
+    return this.refreshInFlight$;
   }
 
   isVerified(user?: User | null): boolean {

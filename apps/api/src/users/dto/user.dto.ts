@@ -1,4 +1,5 @@
 import { IsOptional, IsString } from 'class-validator';
+import { IsArgentinePhone } from '../../common/validators/phone.validators.js';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -11,6 +12,7 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
+  @IsArgentinePhone()
   phone?: string;
 
   @IsOptional()

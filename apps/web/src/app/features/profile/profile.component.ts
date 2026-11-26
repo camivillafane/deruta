@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { PHONE_HINT, argentinePhoneValidator } from '../../core/utils/phone';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '@core/services/auth.service';
@@ -39,7 +40,7 @@ export class ProfileComponent implements OnInit {
     this.form = this.fb.group({
       name: ['', Validators.required],
       lastName: ['', Validators.required],
-      phone: [''],
+      phone: ['', argentinePhoneValidator],
       city: [''],
     });
 
@@ -67,13 +68,24 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  phoneError = '';
+
   onSubmit(): void {
+    this.phoneError = this.form.get('phone')?.errors?.['phone'] ? PHONE_HINT : '';
     if (this.form.invalid) return;
     this.saving = true;
-    this.usersService.updateProfile(this.form.value).subscribe((user: User) => {
-      this.user = user;
-      this.auth.updateStoredUser(user);
-      this.saving = false;
+    this.usersService.updateProfile(this.form.value).subscribe({
+      next: (user: User) => {
+        this.user = user;
+        this.form.patchValue(user);
+        this.auth.updateStoredUser(user);
+        this.saving = false;
+      },
+      error: (err) => {
+        this.saving = false;
+        const message = err.error?.message;
+        this.phoneError = Array.isArray(message) ? message.join('. ') : message || 'No se pudo guardar';
+      },
     });
   }
 

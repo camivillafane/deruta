@@ -25,7 +25,7 @@
               <app-input formControlName="lastName" label="Apellido" id="lastName"></app-input>
             </div>
             <div class="form-row">
-              <app-input formControlName="phone" label="Teléfono" id="phone"></app-input>
+              <app-input formControlName="phone" label="Celular" type="tel" placeholder="351 123 4567" id="phone" [error]="phoneError"></app-input>
               <app-input formControlName="city" label="Ciudad" id="city"></app-input>
             </div>
             <app-button type="submit" variant="primary" [loading]="saving">Guardar cambios</app-button>

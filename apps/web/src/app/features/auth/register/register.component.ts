@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { PHONE_HINT, argentinePhoneValidator } from '../../../core/utils/phone';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { InputComponent } from '../../../shared/components/input/input.component';
 import { CardComponent } from '../../../shared/components/card/card.component';
@@ -54,8 +55,9 @@ import { CardComponent } from '../../../shared/components/card/card.component';
               />
               <app-input
                 formControlName="phone"
-                label="Teléfono"
-                placeholder="+54 9 11 1234 5678"
+                label="Celular"
+                type="tel"
+                placeholder="351 123 4567"
                 id="phone"
                 [error]="getError('phone')"
               />
@@ -107,7 +109,7 @@ export class RegisterComponent {
       name: ['', Validators.required],
       lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      phone: [''],
+      phone: ['', [Validators.required, argentinePhoneValidator]],
       password: ['', [Validators.required, Validators.minLength(8)]],
     });
   }
@@ -127,7 +129,8 @@ export class RegisterComponent {
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.message || 'Error al registrarse';
+        const message = err.error?.message;
+        this.errorMessage = (Array.isArray(message) ? message.join('. ') : message) || 'Error al registrarse';
       },
     });
   }
@@ -137,6 +140,7 @@ export class RegisterComponent {
     if (control?.invalid && (control.dirty || control.touched)) {
       if (control.errors?.['required']) return 'Este campo es obligatorio';
       if (control.errors?.['email']) return 'Email inválido';
+      if (control.errors?.['phone']) return PHONE_HINT;
       if (control.errors?.['minlength']) return 'Mínimo 8 caracteres';
     }
     return '';

@@ -4,6 +4,7 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Trip, TripStatus } from '../entities/index.js';
 import { TripRequest, TripRequestStatus } from '../entities/index.js';
 import { Conversation } from '../entities/index.js';
+import { toPublicUser } from '../common/utils/user.mapper.js';
 import { CreateTripRequestDto, UpdateTripRequestStatusDto } from './dto/trip-request.dto.js';
 import { NotificationDispatcherService } from '../common/services/notification-dispatcher.service.js';
 
@@ -73,16 +74,25 @@ export class TripRequestsService {
     });
   }
 
+  // Solo datos públicos de la otra persona (nombre, foto, calificación): antes se
+  // devolvía el usuario completo, con DNI, licencia, email y teléfono.
   async findByPassenger(passengerId: string): Promise<TripRequest[]> {
-    return this.requestRepository.find({
+    const requests = await this.requestRepository.find({
       where: { passengerId },
       relations: { trip: { driver: true, vehicle: true } },
       order: { createdAt: 'DESC' },
     });
+    return requests.map((request) => ({
+      ...request,
+      trip: request.trip && {
+        ...request.trip,
+        driver: toPublicUser(request.trip.driver) as Trip['driver'],
+      },
+    }));
   }
 
   async findByDriver(driverId: string): Promise<TripRequest[]> {
-    return this.requestRepository
+    const requests = await this.requestRepository
       .createQueryBuilder('request')
       .leftJoinAndSelect('request.trip', 'trip')
       .leftJoinAndSelect('request.passenger', 'passenger')
@@ -90,6 +100,10 @@ export class TripRequestsService {
       .where('trip.driverId = :driverId', { driverId })
       .orderBy('request.createdAt', 'DESC')
       .getMany();
+    return requests.map((request) => ({
+      ...request,
+      passenger: toPublicUser(request.passenger) as TripRequest['passenger'],
+    }));
   }
 
   async updateStatus(

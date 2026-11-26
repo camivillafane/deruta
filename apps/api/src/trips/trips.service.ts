@@ -177,7 +177,9 @@ export class TripsService {
       where: { tripId, passengerId: userId },
       relations: { passenger: true },
     });
-    return { request };
+    return {
+      request: request && { ...request, passenger: toPublicUser(request.passenger) as TripRequest['passenger'] },
+    };
   }
 
   async complete(id: string, driverId: string): Promise<Trip> {

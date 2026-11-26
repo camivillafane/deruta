@@ -1,11 +1,12 @@
 import {
+  BadRequestException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { compare, hash } from 'bcryptjs';
-import { randomInt } from 'crypto';
+import { createHash, randomBytes, randomInt } from 'crypto';
 import { UsersService } from '../users/users.service.js';
 import type { User } from '../entities/index.js';
 import { LoginDto, RegisterDto } from './dto/auth.dto.js';
@@ -24,6 +25,13 @@ export interface TokenPayload {
 
 /** Intentos fallidos permitidos por código de verificación antes de invalidarlo. */
 export const MAX_VERIFICATION_ATTEMPTS = 5;
+
+/** Validez del link de "olvidé mi contraseña". */
+export const PASSWORD_RESET_TTL_MINUTES = 60;
+
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}
 
 export type PublicUser = Omit<
   User,
@@ -114,6 +122,47 @@ export class AuthService {
     }
 
     return this.generateTokens(user);
+  }
+
+  /**
+   * Manda un link para cambiar la contraseña. No falla ni avisa si el email no
+   * existe (para no revelar qué cuentas hay). Se guarda solo el hash del token.
+   */
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user || user.isBlocked) {
+      return;
+    }
+
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MINUTES * 60 * 1000);
+    await this.usersService.setPasswordResetToken(user.id, sha256(token), expiresAt);
+
+    const webUrl = this.configService.get<string>('WEB_URL', 'http://localhost:4200').replace(/\/$/, '');
+    const link = `${webUrl}/restablecer-clave?token=${token}`;
+    try {
+      await this.emailServiceFactory.create().send({
+        to: user.email,
+        subject: 'Cambiá tu contraseña - DE RUTA',
+        text: `Hola ${user.name}: para elegir una contraseña nueva entrá a ${link} . El link vence en ${PASSWORD_RESET_TTL_MINUTES} minutos. Si no lo pediste, ignorá este mensaje.`,
+        html: `<p>Hola ${escapeHtml(user.name)}:</p><p>Para elegir una contraseña nueva, tocá este link:</p><p><a href="${link}">Cambiar mi contraseña</a></p><p>Vence en ${PASSWORD_RESET_TTL_MINUTES} minutos. Si no lo pediste, ignorá este mensaje.</p>`,
+      });
+    } catch (error) {
+      console.error('No se pudo enviar el email de recuperación:', error);
+    }
+  }
+
+  async resetPassword(token: string, password: string): Promise<{ message: string }> {
+    const user = await this.usersService.findByPasswordResetTokenHash(sha256(token));
+    if (
+      !user ||
+      !user.passwordResetExpiresAt ||
+      new Date() > new Date(user.passwordResetExpiresAt)
+    ) {
+      throw new BadRequestException('El link es inválido o venció. Pedí uno nuevo.');
+    }
+    await this.usersService.resetPassword(user.id, await hash(password, 12));
+    return { message: 'Listo, ya podés ingresar con tu nueva contraseña.' };
   }
 
   async logout(userId: string): Promise<void> {
@@ -303,4 +352,8 @@ export class AuthService {
       });
     }
   }
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
 }

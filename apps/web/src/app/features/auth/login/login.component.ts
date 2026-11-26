@@ -43,6 +43,7 @@ import { CardComponent } from '../../../shared/components/card/card.component';
                 id="password"
                 [error]="getError('password')"
               />
+              <a routerLink="/olvide-mi-clave" class="auth-forgot">¿Olvidaste tu contraseña?</a>
 
               @if (errorMessage) {
                 <div class="auth-error">{{ errorMessage }}</div>

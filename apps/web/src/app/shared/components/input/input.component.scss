@@ -15,7 +15,8 @@
     border: 1.5px solid var(--color-gray);
     border-radius: var(--radius-md);
     font-family: inherit;
-    font-size: 0.9375rem;
+    // 16px como mínimo: con menos, Safari de iPhone hace zoom al tocar el campo.
+    font-size: 1rem;
     background-color: var(--color-white);
     color: var(--color-text);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;

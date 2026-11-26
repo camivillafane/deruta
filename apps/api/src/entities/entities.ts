@@ -96,6 +96,13 @@ export class User {
   @Column({ nullable: true, type: 'varchar', select: false })
   refreshTokenHash?: string;
 
+  /** sha256 del token de "olvidé mi contraseña" (el token en sí solo viaja por email). */
+  @Column({ nullable: true, type: 'varchar', select: false })
+  passwordResetTokenHash?: string | null;
+
+  @Column({ nullable: true, type: Date, select: false })
+  passwordResetExpiresAt?: Date | null;
+
   @Column({ default: false })
   isBlocked: boolean;
 

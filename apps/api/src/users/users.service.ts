@@ -109,6 +109,32 @@ export class UsersService {
     return this.userRepository.save(user);
   }
 
+  async setPasswordResetToken(id: string, tokenHash: string | null, expiresAt: Date | null): Promise<void> {
+    await this.userRepository.update(id, {
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: expiresAt,
+    } as Partial<User>);
+  }
+
+  async findByPasswordResetTokenHash(tokenHash: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.passwordResetTokenHash')
+      .addSelect('user.passwordResetExpiresAt')
+      .where('user.passwordResetTokenHash = :tokenHash', { tokenHash })
+      .getOne();
+  }
+
+  /** Cambia la contraseña, invalida el link usado y cierra todas las sesiones abiertas. */
+  async resetPassword(id: string, passwordHash: string): Promise<void> {
+    await this.userRepository.update(id, {
+      passwordHash,
+      passwordResetTokenHash: null,
+      passwordResetExpiresAt: null,
+      refreshTokenHash: null,
+    } as unknown as Partial<User>);
+  }
+
   async setRefreshTokenHash(id: string, refreshTokenHash: string | null): Promise<void> {
     // null (no undefined): con undefined TypeORM no tocaba la columna y el logout
     // no invalidaba el refresh token.
